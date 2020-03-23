@@ -1,4 +1,4 @@
-from pettingzoo.utils.markov_env_wrapper import MarkovGameEnv
+from pettingzoo.utils.pom_game_wrapper import POMGameEnv
 from pettingzoo.gamma import prison
 from copy import deepcopy
 import ray
@@ -37,11 +37,11 @@ custom_config = get_default_config_with_aec(alg_name=alg_name,
                                             game_name=game_name)
 
 # 2. Register env
-register_env(game_name, lambda env_config: MarkovGameEnv(env_config))
+register_env(game_name, lambda env_config: POMGameEnv(env_config))
 
 # 3. Extracts action_spaces and observation_spaces from environment instance
 def get_spaces(input_config) -> Tuple:
-    test_env = MarkovGameEnv(input_config['env_config'])
+    test_env = POMGameEnv(input_config['env_config'])
     obs = test_env.observation_space
     act = test_env.action_space
     test_env.close()

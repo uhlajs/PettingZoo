@@ -1,4 +1,4 @@
-from pettingzoo.utils.markov_env_wrapper import AECMultiAgentEnv
+from pettingzoo.utils.pom_game_wrapper import POMGameEnv
 from pettingzoo.gamma import prison
 from copy import deepcopy
 import ray
@@ -16,12 +16,12 @@ from typing import Dict, Tuple
 4. num_rollouts
 '''
 
-alg_name = 'DDPG'
+alg_name = 'PPO'
 game_name = 'simple_spread'
 num_cpus= 2
 num_rollouts = 2
 
-# 1. Get's default training configuration and specifies the AECgame to load.
+# 1. Get's default training configuration and specifies the POMgame to load.
 def get_default_config_with_aec(alg_name='PPO', game_name='prison'):
     agent_cls = get_agent_class(alg_name)
     config = deepcopy(agent_cls._default_config)
@@ -37,13 +37,14 @@ custom_config = get_default_config_with_aec(alg_name=alg_name,
                                             game_name=game_name)
 
 # 2. Register env
-register_env(game_name, lambda env_config: AECMultiAgentEnv(env_config))
+register_env(game_name, lambda env_config: POMGameEnv(env_config))
 
 # 3. Extracts action_spaces and observation_spaces from environment instance
-custom_config['env_config']['continuous_actions'] = True
+#custom_config['env_config']['continuous_actions'] = True
+
 
 def get_spaces(input_config) -> Tuple:
-    test_env = AECMultiAgentEnv(input_config['env_config'])
+    test_env = POMGameEnv(input_config['env_config'])
     obs = test_env.observation_space
     act = test_env.action_space
 
@@ -70,11 +71,10 @@ custom_config['num_workers'] = 1
 custom_config['sample_batch_size'] = 200     # Fragment length, collected at once from each worker. Rollout is divided into fragments
 custom_config['train_batch_size'] = 400     # Training batch size -> Fragments are concatenated up to this point.
 custom_config['horizon'] = 100              # After 100 steps, force reset simulation
-custom_config['no_done_at_end'] = True
+custom_config['no_done_at_end'] = False
 
 trainer = get_agent_class(alg_name)(env=game_name, config=custom_config)
 
 # 7. Train 10 iterations
 for i in range(10):
     trainer.train()
-    print(i)

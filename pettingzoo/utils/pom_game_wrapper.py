@@ -1,27 +1,31 @@
-from ray.rllib.utils.annotations import PublicAPI
 from ray.rllib.env import MultiAgentEnv
-from pettingzoo.gamma import prison
 from pettingzoo.utils.markov_registry import get_game_class
 from pettingzoo.utils.wrapper import wrapper
-class MarkovGameEnv(MultiAgentEnv):
-    """A wrapper class for the PettingZoo MARL environment library.
 
-    This class inherents from the MultiAgentEnv and exposes a given AEC
+
+class POMGameEnv(MultiAgentEnv):
+    """An interface to the PettingZoo MARL environment library.
+
+    This class inherents from MultiAgentEnv and exposes a given AEC
     (actor-environment-cycle) game from the PettingZoo project via the
     MultiAgentEnv public API.
 
-    It reduces the class of AEC games to Markov games by imposing the following
+    It reduces the class of AEC games to Partially Observable Markov (POM) games by imposing the following
     important restrictions onto an AEC environment:
 
     1. Each agent is listed exactly ones in agent_order.
     2. The order of the agents in agent_order does not change over time.
-    3. All agents have the same action_spaces and observation_spaces.
-    This is important since MARL with RLlib requires specifying
-    policy spaces on experiment setup.
+    3. Agents act simultaneously (-> No hard-turn games like chess).
+    4. Environments are positive sum games (-> Agents are expected to cooperate to maximize reward).
+    5. All agents have the same action_spaces and observation_spaces.
+    Note: If, within your aec game, agents do not have homogeneous action / observation spaces, use the wrapper class
+    from PettingZoo to apply padding functionality.
+    6. By default: If all agents are done, the simulation signals termination and is restarted.
+    ToDo: Check & update description and example
 
     Examples:
         >>> from pettingzoo.gamma import prison
-        >>> env = MarkovGameEnv(aec_env=prison)
+        >>> env = POMGameEnv(env_config={'aec_env': 'simple_spread'})
         >>> obs = env.reset()
         >>> print(obs)
 
@@ -64,7 +68,7 @@ class MarkovGameEnv(MultiAgentEnv):
             else:
                 self.aec_env = get_game_class(env_config['aec_env']).env()
         else:
-            raise ValueError('Markov game not specified. Consult utils/markov_registry.py to see valid inputs.')
+            raise ValueError('POM game not specified. Consult utils/pom_registry.py to see valid inputs.')
 
         # if flag is specified and False, then disable functionality in
         if 'set_all_done' in env_config.keys() and not env_config['set_all_done']:
@@ -94,6 +98,7 @@ class MarkovGameEnv(MultiAgentEnv):
                                    continuous_actions=env_config.get('continuous_actions', False),
                                    frame_stacking=env_config.get('frame_stacking', 1)
                                    )
+
         else:
             self.wrap = False
 
@@ -154,7 +159,6 @@ class MarkovGameEnv(MultiAgentEnv):
         self._init_dicts()
 
         # 3. Get initial observations
-        self.obs = dict()
         for agent in self.agents:
 
             # For each agent get initial observations
@@ -191,22 +195,22 @@ class MarkovGameEnv(MultiAgentEnv):
         # Update rewards
         self.rewards = self.aec_env.rewards
 
-        # Update infos stepwise, here we do not copy the dictionary,
-        # since RLlib expects {}, not None, if no infos are given.
-        for agent in self.agents:
-            if self.aec_env.infos[agent]:
-                self.infos[agent] = self.aec_env.infos[agent]
-
-        # Set __all__ on done, if signaled by env, e.g. in env.step().
+        ''' Set __all__ on done, if signaled by env, e.g. in env.step().
         if '__all__' in self.aec_env.dones.keys():
             self.dones['__all__'] = self.aec_env.dones['__all__']
+        '''
 
         # Set __all__ on done, whenever all agents are individually done -> Used to signal episode termination.
         if self.set_all_done:
             if all(list(self.dones.values())[:-1]):
                 print('switching to all_done!')
-                print(self.dones)
                 self.dones['__all__'] = True
+
+        # Update infos stepwise, here we do not copy the dictionary,
+        # since RLlib expects {}, not None, if no infos are given.
+        for agent in self.agents:
+            if self.aec_env.infos[agent]:
+                self.infos[agent] = self.aec_env.infos[agent]
 
         return self.obs, self.rewards, self.dones, self.infos
 
