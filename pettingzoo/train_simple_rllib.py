@@ -67,14 +67,13 @@ ray.init(num_cpus=num_cpus+1)
 
 # 6. Training configs
 custom_config['log_level'] = 'DEBUG'
-custom_config['num_workers'] = 1
-custom_config['sample_batch_size'] = 200     # Fragment length, collected at once from each worker. Rollout is divided into fragments
-custom_config['train_batch_size'] = 400     # Training batch size -> Fragments are concatenated up to this point.
+custom_config['num_workers'] = 4
+custom_config['sample_batch_size'] = 200     # Fragment length, once from each worker. Rollout is divided into fragments
+custom_config['train_batch_size'] = 4000     # Training batch size -> Fragments are concatenated up to this point.
 custom_config['horizon'] = 100              # After 100 steps, force reset simulation
 custom_config['no_done_at_end'] = False
 
 trainer = get_agent_class(alg_name)(env=game_name, config=custom_config)
 
-# 7. Train 10 iterations
-for i in range(10):
-    trainer.train()
+# 7. Train once
+trainer.train()
