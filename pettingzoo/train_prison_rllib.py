@@ -70,12 +70,12 @@ custom_config['env_config']['game_args'] = None
 # custom_config['normalize_actions'] = True  # Not working at the moment.
 custom_config['log_level'] = 'DEBUG'
 custom_config['num_workers'] = 1
-custom_config['sample_batch_size'] = 10     # Fragment length, collected at once from each worker and for each agent!
+custom_config['sample_batch_size'] = 30     # Fragment length, collected at once from each worker and for each agent!
 custom_config['train_batch_size'] = 200     # Training batch size -> Fragments are concatenated up to this point.
 custom_config['horizon'] = 200              # After n steps, force reset simulation
 custom_config['no_done_at_end'] = False     # Default: False
 # Info: If False, each agents trajectory is expected to have maximum one done=True in the last step of the trajectory.
-# If no_done_at_end = True, dones are ignored.
+# If no_done_at_end = True, environment is not resetted when dones[__all__]= True.
 
 trainer = get_agent_class(alg_name)(env=game_name, config=custom_config)
 
