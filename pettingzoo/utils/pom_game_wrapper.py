@@ -1,7 +1,6 @@
 from ray.rllib.env import MultiAgentEnv
-from pettingzoo.utils.markov_registry import get_game_class
+from pettingzoo.utils.pom_registry import get_game_class
 from pettingzoo.utils.wrapper import wrapper
-
 
 class POMGameEnv(MultiAgentEnv):
     """An interface to the PettingZoo MARL environment library.
@@ -77,15 +76,14 @@ class POMGameEnv(MultiAgentEnv):
             # Default behavior if not specified
             self.set_all_done = True
 
-
         # instantiate wrapper
-        if any(['color_reduction' in env_config.keys(),
-               'down_scale' in env_config.keys(),
-               'reshape' in env_config.keys(),
-               'range_scale' in env_config.keys(),
-               'new_dtype' in env_config.keys(),
-               'continuous_actions' in env_config.keys(),
-               'frame_stacking' in env_config.keys()]):
+        if any(('color_reduction' in env_config.keys(),
+                'down_scale' in env_config.keys(),
+                'reshape' in env_config.keys(),
+                'range_scale' in env_config.keys(),
+                'new_dtype' in env_config.keys(),
+                'continuous_actions' in env_config.keys(),
+                'frame_stacking' in env_config.keys())):
 
             self.wrap = True
 
@@ -113,7 +111,6 @@ class POMGameEnv(MultiAgentEnv):
         # Get dictionaries of obs_spaces and act_spaces
         self.observation_spaces = self.aec_env.observation_spaces
         self.action_spaces = self.aec_env.action_spaces
-
 
         # Get first observation space, assuming all agents have equal space
         self.observation_space = self.observation_spaces[self.agents[0]]
@@ -152,13 +149,16 @@ class POMGameEnv(MultiAgentEnv):
         Returns:
             obs (dict): New observations for each ready agent.
         """
-        # 1. Reset environment, point to first agent in agent_order.
+        # 1. Reset environment; agent pointer points to first agent in agent_order.
         self.aec_env.reset(observe=False)
 
-        # 2. Reset dictionaries
+        # 2. Copy agents from environment
+        self.agents = self.aec_env.agents
+
+        # 3. Reset dictionaries
         self._init_dicts()
 
-        # 3. Get initial observations
+        # 4. Get initial observations
         for agent in self.agents:
 
             # For each agent get initial observations
@@ -183,27 +183,31 @@ class POMGameEnv(MultiAgentEnv):
                 "__all__" (required) is used to indicate env termination.
             infos (dict): Optional info values for each agent id.
         """
+        # iterate over self.agents
+        for agent in self.agents:
 
-        for agent in action_dict.keys():
-
-            # Execute only for agents with done = False
-            if not self.dones[agent]:
-                # Make each agent step once (full iteration in agent_selector)
+            # Execute only for agents that have not been done in previous steps
+            if agent in action_dict.keys():
+                # Execute agent action in environment
                 self.obs[agent] = self.aec_env.step(action_dict[agent], observe=True)
+                # Get reward
+                self.rewards[agent] = self.aec_env.rewards[agent]
+                # Update done status
                 self.dones[agent] = self.aec_env.dones[agent]
 
-        # Update rewards
-        self.rewards = self.aec_env.rewards
+            # For agents with done = True, remove from dones, rewards and observationss
+            else:
+                del self.dones[agent]
+                del self.rewards[agent]
+                del self.obs[agent]
+                del self.infos[agent]
 
-        ''' Set __all__ on done, if signaled by env, e.g. in env.step().
-        if '__all__' in self.aec_env.dones.keys():
-            self.dones['__all__'] = self.aec_env.dones['__all__']
-        '''
+        # update self.agents
+        self.agents = list(action_dict.keys())
 
         # Set __all__ on done, whenever all agents are individually done -> Used to signal episode termination.
         if self.set_all_done:
             if all(list(self.dones.values())[:-1]):
-                print('switching to all_done!')
                 self.dones['__all__'] = True
 
         # Update infos stepwise, here we do not copy the dictionary,
