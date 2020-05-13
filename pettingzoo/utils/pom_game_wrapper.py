@@ -1,6 +1,14 @@
 from ray.rllib.env import MultiAgentEnv
 from pettingzoo.utils.pom_registry import get_game_class
-from pettingzoo.utils.wrapper import wrapper
+from supersuit import   color_reduction, \
+                        continuous_actions, \
+                        down_scale, \
+                        dtype, \
+                        flatten, \
+                        frame_stack, \
+                        normalize_obs, \
+                        reshape
+
 
 class POMGameEnv(MultiAgentEnv):
     """An interface to the PettingZoo MARL environment library.
@@ -20,7 +28,7 @@ class POMGameEnv(MultiAgentEnv):
     Note: If, within your aec game, agents do not have homogeneous action / observation spaces, use the wrapper class
     from PettingZoo to apply padding functionality.
     6. By default: If all agents are done, the simulation signals termination and is restarted.
-    ToDo: Check & update description and example
+    ToDo: Check & update description and example, add env_config_dict_description
 
     Examples:
         >>> from pettingzoo.gamma import prison
@@ -76,17 +84,28 @@ class POMGameEnv(MultiAgentEnv):
             # Default behavior if not specified
             self.set_all_done = True
 
-        # instantiate wrapper
-        if any(('color_reduction' in env_config.keys(),
-                'down_scale' in env_config.keys(),
-                'reshape' in env_config.keys(),
-                'range_scale' in env_config.keys(),
-                'new_dtype' in env_config.keys(),
-                'continuous_actions' in env_config.keys(),
-                'frame_stacking' in env_config.keys())):
+        # instantiate
+        if any(('color_reduction' in env_config.keys(), #{'full', 'R', 'G', 'B'}
+                'continuous_actions' in env_config.keys(), #Union[Bool,[seed:int]]
+                'down_scale' in env_config.keys(), #Union[Bool, Tuple[x_scale:int,y_scale:int]]   1,1
+                'dtype' in env_config.keys(), #dtype, maybe as string 'Many graphical games return uint8 observations, while neural networks generally want float16 or float32.
+                'flatten' in env_config.keys(), #Bool
+                'frame_stack' in env_config.keys(), #Optional[num_frames:int]   4
+                'normalize_obs' in env_config.keys(), #Union[Bool, Tuple[env_min:int,env_max:int]]   0,1
+                'reshape' in env_config.keys(), #Tuple[int, int]
+                'agent_indicator' in env_config.keys(),     #Bool
+                'pad_action_space' in env_config.keys(),    #Bool
+                'pad_observations' in env_config.keys(),    #Bool
+
+                # To be used in Rllib, all params in env_config have to be pickable.
+                # Hence lambdas are not supported for now.
+                'action_lambda' in env_config.keys(),
+                'observations_lambda' in env_config.keys()),
+               ):
 
             self.wrap = True
 
+            # ToDo: Change to using supersuit, soround with try catch block
             self.aec_env = wrapper(self.aec_env,
                                    color_reduction=env_config.get('color_reduction', None),
                                    down_scale=env_config.get('down_scale', None),
@@ -103,6 +122,7 @@ class POMGameEnv(MultiAgentEnv):
         # agent idx list
         self.agents = self.aec_env.agents
 
+        # ToDo: Inspect if this code block is still neeeded, probably not, since _modify_spaces is called when initializing a Wrapper instance.
         if self.wrap:
             # Get modified dictionaries from wrapper
             self.aec_env.modify_observation_space()

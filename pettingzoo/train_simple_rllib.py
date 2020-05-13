@@ -14,6 +14,8 @@ from typing import Dict, Tuple
 2. Name of the aec game you want to train on, e.g.: 'prison'.
 3. num_cpus
 4. num_rollouts
+
+Does not use SuperSuit
 '''
 
 alg_name = 'PPO'

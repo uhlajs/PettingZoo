@@ -3,13 +3,13 @@
 
 
 def _import_prison():
-    from pettingzoo.gamma import prison
-    return prison
+    from pettingzoo.gamma import prison_v0
+    return prison_v0
 
 
 def _import_simple_spread():
-    from pettingzoo.mpe import simple_spread
-    return simple_spread
+    from pettingzoo.mpe import simple_spread_v0
+    return simple_spread_v0
 
 
 POM_GAMES = {
