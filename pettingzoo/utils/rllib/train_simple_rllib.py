@@ -1,5 +1,4 @@
-from pettingzoo.utils.pom_game_wrapper import POMGameEnv
-from pettingzoo.gamma import prison
+from pettingzoo.utils.rllib.pom_game_wrapper import POMGameEnv
 from copy import deepcopy
 import ray
 try:
@@ -15,15 +14,16 @@ from typing import Dict, Tuple
 3. num_cpus
 4. num_rollouts
 
-Does require SuperSuit
+Does not use SuperSuit
 '''
 
 alg_name = 'PPO'
-game_name = 'prison'
-num_cpus= 2
+game_name = 'simple_spread'
+num_cpus= 1
 num_rollouts = 2
 
-# 1. Get's default training configuration and specifies the AECgame to load.
+
+# 1. Get's default training configuration and specifies the POMgame to load.
 def get_default_config_with_aec(alg_name='PPO', game_name='prison'):
     agent_cls = get_agent_class(alg_name)
     config = deepcopy(agent_cls._default_config)
@@ -42,10 +42,14 @@ custom_config = get_default_config_with_aec(alg_name=alg_name,
 register_env(game_name, lambda env_config: POMGameEnv(env_config))
 
 # 3. Extracts action_spaces and observation_spaces from environment instance
+#custom_config['env_config']['continuous_actions'] = True
+
+
 def get_spaces(input_config) -> Tuple:
     test_env = POMGameEnv(input_config['env_config'])
     obs = test_env.observation_space
     act = test_env.action_space
+
     test_env.close()
     return obs, act
 
@@ -63,23 +67,17 @@ custom_config["multiagent"] = {
 # 5. Initialize ray and trainer object
 ray.init(num_cpus=num_cpus+1)
 
-# 6. Adding range scale to demonstrate wrapper functionality
-custom_config['env_config']['range_scale'] = (-300, 300)
-custom_config['env_config']['set_all_done'] = True     # Default = True
-custom_config['env_config']['game_args'] = None
-
-
-# custom_config['normalize_actions'] = True  # Not working at the moment.
+# 6. Training configs
 custom_config['log_level'] = 'DEBUG'
-custom_config['num_workers'] = 1
-custom_config['sample_batch_size'] = 30     # Fragment length, collected at once from each worker and for each agent!
-custom_config['train_batch_size'] = 200     # Training batch size -> Fragments are concatenated up to this point.
-custom_config['horizon'] = 200              # After n steps, force reset simulation
-custom_config['no_done_at_end'] = False     # Default: False
-# Info: If False, each agents trajectory is expected to have maximum one done=True in the last step of the trajectory.
-# If no_done_at_end = True, environment is not resetted when dones[__all__]= True.
+custom_config['num_workers'] = 4
+custom_config['sample_batch_size'] = 200     # Fragment length, once from each worker. Rollout is divided into fragments
+custom_config['train_batch_size'] = 4000     # Training batch size -> Fragments are concatenated up to this point.
+custom_config['horizon'] = 100              # After 100 steps, force reset simulation
+custom_config['no_done_at_end'] = False
 
 trainer = get_agent_class(alg_name)(env=game_name, config=custom_config)
 
 # 7. Train once
 trainer.train()
+
+# 8. Apply the trainer

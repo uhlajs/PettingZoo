@@ -1,19 +1,13 @@
 from ray.rllib.env import MultiAgentEnv
-from pettingzoo.utils.pom_registry import get_game_class
-from supersuit import   color_reduction, \
-                        continuous_actions, \
-                        down_scale, \
-                        dtype, \
-                        flatten, \
-                        frame_stack, \
-                        normalize_obs, \
-                        reshape
+from pettingzoo.utils.rllib.pom_registry import get_game_class
+from supersuit import color_reduction, continuous_actions, down_scale, dtype, flatten, frame_stack, normalize_obs, \
+                      reshape
 
 
 class POMGameEnv(MultiAgentEnv):
     """An interface to the PettingZoo MARL environment library.
 
-    This class inherents from MultiAgentEnv and exposes a given AEC
+    Inherits from MultiAgentEnv and exposes a given AEC
     (actor-environment-cycle) game from the PettingZoo project via the
     MultiAgentEnv public API.
 
@@ -28,7 +22,6 @@ class POMGameEnv(MultiAgentEnv):
     Note: If, within your aec game, agents do not have homogeneous action / observation spaces, use the wrapper class
     from PettingZoo to apply padding functionality.
     6. By default: If all agents are done, the simulation signals termination and is restarted.
-    ToDo: Check & update description and example, add env_config_dict_description
 
     Examples:
         >>> from pettingzoo.gamma import prison
@@ -65,11 +58,32 @@ class POMGameEnv(MultiAgentEnv):
     """
 
     def __init__(self, env_config):
+        """
+        env_config: Dict, specifies:
+                    - PettingZoo game used. Consult pom_registry for all games that can be used as a POM game.
+                    - Possible SuperSuit wrappers and possible wrapper parameters. Available wrappers:
+                        - color_reduction
+                        - continuous_actions
+                        - down_scale
+                        - dtype
+                        - flatten
+                        - frame_stack
+                        - normalize_obs
+                        - reshape
+                    - Optional game-dependent parameters.
+
+        Example:
+            env_config = {
+                'aec_env': 'prison',
+                'normalize_obs': True,
+                'game_args': None
+            }
+        """
 
         # choose the game
         if 'aec_env' in env_config.keys():
 
-            # Pass all optional environment params
+            # Unpack all optional environment params
             if 'game_args' in env_config.keys() and isinstance(env_config['game_args'], dict):
                 self.aec_env = get_game_class(env_config['aec_env']).env(**env_config['game_args'])
             else:
@@ -84,49 +98,69 @@ class POMGameEnv(MultiAgentEnv):
             # Default behavior if not specified
             self.set_all_done = True
 
-        # instantiate
-        if any(('color_reduction' in env_config.keys(), #{'full', 'R', 'G', 'B'}
-                'continuous_actions' in env_config.keys(), #Union[Bool,[seed:int]]
-                'down_scale' in env_config.keys(), #Union[Bool, Tuple[x_scale:int,y_scale:int]]   1,1
-                'dtype' in env_config.keys(), #dtype, maybe as string 'Many graphical games return uint8 observations, while neural networks generally want float16 or float32.
-                'flatten' in env_config.keys(), #Bool
-                'frame_stack' in env_config.keys(), #Optional[num_frames:int]   4
-                'normalize_obs' in env_config.keys(), #Union[Bool, Tuple[env_min:int,env_max:int]]   0,1
-                'reshape' in env_config.keys(), #Tuple[int, int]
-                'agent_indicator' in env_config.keys(),     #Bool
-                'pad_action_space' in env_config.keys(),    #Bool
-                'pad_observations' in env_config.keys(),    #Bool
+        # SuperSuit wrappers
+        if 'color_reduction' in env_config.keys():
+            self.aec_env = color_reduction(env=self.aec_env, mode=env_config['color_reduction'])
 
-                # To be used in Rllib, all params in env_config have to be pickable.
-                # Hence lambdas are not supported for now.
-                'action_lambda' in env_config.keys(),
-                'observations_lambda' in env_config.keys()),
-               ):
+        if 'continuous_actions' in env_config.keys():
+            if isinstance(env_config['continuous_actions'], bool):
+                self.aec_env = continuous_actions(env=self.aec_env)
 
-            self.wrap = True
+            elif isinstance(env_config['continuous_actions'], int):
+                self.aec_env = continuous_actions(env=self.aec_env, seed=env_config[continuous_actions])
 
-            # ToDo: Change to using supersuit, soround with try catch block
-            self.aec_env = wrapper(self.aec_env,
-                                   color_reduction=env_config.get('color_reduction', None),
-                                   down_scale=env_config.get('down_scale', None),
-                                   reshape=env_config.get('reshape', None),
-                                   range_scale=env_config.get('range_scale', None),
-                                   new_dtype=env_config.get('new_dtype', None),
-                                   continuous_actions=env_config.get('continuous_actions', False),
-                                   frame_stacking=env_config.get('frame_stacking', 1)
-                                   )
+            else:
+                raise ValueError("Wrong config param data type. Consult class description.")
 
-        else:
-            self.wrap = False
+        if 'down_scale' in env_config.keys():
+            if isinstance(env_config['down_scale'], bool):
+                self.aec_env = down_scale(env=self.aec_env)
+
+            elif isinstance(env_config['down_scale'], tuple):
+                self.aec_env = down_scale(env=self.aec_env,
+                                          x_scale=env_config['down_scale'][0],
+                                          y_scale=env_config['down_scale'][1])
+
+        if 'dtype' in env_config.keys():
+            self.aec_env = dtype(env=self.aec_env, dtype=env_config['dtype'])
+
+        if 'flatten' in env_config.keys():
+            self.aec_env = flatten(env=self.aec_env)
+
+        if 'frame_stack' in env_config.keys():
+            if isinstance(env_config['frame_stack'], bool):
+                self.aec_env = frame_stack(env=self.aec_env)
+
+            elif isinstance(env_config['frame_stack'], int):
+                self.aec_env = frame_stack(env=self.aec_env, num_frames=env_config['frame_stack'])
+
+        if 'normalize_obs' in env_config.keys():
+            if isinstance(env_config['normalize_obs'], bool):
+                self.aec_env = normalize_obs(env=self.aec_env)
+
+            elif isinstance(env_config['normalize_obs'], tuple):
+                self.aec_env = normalize_obs(env=self.aec_env,
+                                             env_min=env_config['frame_stack'][0],
+                                             env_max=env_config['frame_stack'][1])
+
+        if 'reshape' in env_config.keys():
+            if isinstance(env_config['reshape'], tuple):
+                self.aec_env = reshape(env=self.aec_env,shape=env_config['reshape'])
+
+
+        """
+        if 'agent_indicator' in env_config.keys():
+            self.aec_env = agent_indicator(self.aec_env)
+            
+        if 'pad_action_space' in env_config.keys():
+            self.aec_env = pad_action_space(self.aec_env)
+            
+        if 'pad_observations' in env_config.keys():
+            self.aec_env = pad_observations(self.aec_env) 
+        """
 
         # agent idx list
         self.agents = self.aec_env.agents
-
-        # ToDo: Inspect if this code block is still neeeded, probably not, since _modify_spaces is called when initializing a Wrapper instance.
-        if self.wrap:
-            # Get modified dictionaries from wrapper
-            self.aec_env.modify_observation_space()
-            self.aec_env.modify_action_space()
 
         # Get dictionaries of obs_spaces and act_spaces
         self.observation_spaces = self.aec_env.observation_spaces
