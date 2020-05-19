@@ -1,7 +1,4 @@
 from ray.rllib.env import MultiAgentEnv
-from supersuit import color_reduction, continuous_actions, down_scale, dtype, flatten, frame_stack, normalize_obs, \
-                      reshape
-
 
 class POMGameEnv(MultiAgentEnv):
     """An interface to the PettingZoo MARL environment library.
@@ -24,7 +21,7 @@ class POMGameEnv(MultiAgentEnv):
 
     Examples:
         >>> from pettingzoo.gamma import prison
-        >>> env = POMGameEnv(env_config={'aec_env': 'simple_spread'})
+        >>> env = POMGameEnv(env_config={'env_cls': simple_spread_v0})
         >>> obs = env.reset()
         >>> print(obs)
 
@@ -58,6 +55,8 @@ class POMGameEnv(MultiAgentEnv):
 
     def __init__(self, env_config, env_creator: object):
         """
+        Parameters:
+        -----------
         env_config: Dict, specifies:
                     - Optional game-dependent parameters.
                     - Optional SuperSuit wrappers.
@@ -67,27 +66,36 @@ class POMGameEnv(MultiAgentEnv):
                         env_config = {
                             'game_args': None,      # Optional dict:
                                                     # Passed to environment, when constructed.
-                            'wrappers': []          # Optional List[Dict]:
-                                                    # SuperSuit wrappers, that the env is wrapped in.
+
+                            'wrappers':             # Optional List[Dict]:
+                            [                       # SuperSuit wrappers, that the env is wrapped in.
+                                {                   # Applied in order of appearence.
+                                    'wrapper_function': normalize_obs,
+                                    'named_params': {
+                                        'env_min': 0,
+                                        'env_max': 1
+                                    },
+                                },
+                            ],
+
                             'set_all_done': False,  # Optional Bool, Default: True:
                                                     # If True: when single agent is done, rollout ends and env resets.
                         }
 
         env_creator: function, which is called to instantiate an env object.
         """
+        self.config = env_config
 
         # Unpack all optional environment params
-        if 'game_args' in env_config.keys() and isinstance(env_config['game_args'], dict):
-            self.aec_env = env_creator(**env_config['game_args'])
+        if 'game_args' in self.config.keys() and isinstance(self.config['game_args'], dict):
+            self.aec_env = env_creator(**self.config['game_args'])
         else:
             self.aec_env = env_creator()
 
-        if 'wrappers' in env_config.keys():
-            for wrapper_dict in env_config['wrappers']:
-                self.aec_env = wrapper_dict['wrapping_function'](env=self.aec_env, **wrapper_dict['named_params'])
+        self._wrap_env()
 
         # If True (default): When single agent is done, rollout ends and env is reseted.
-        if 'set_all_done' in env_config.keys() and not env_config['set_all_done']:
+        if 'set_all_done' in self.config.keys() and not self.config['set_all_done']:
             self.set_all_done = False
         else:
             # Default behavior if not specified
@@ -112,6 +120,19 @@ class POMGameEnv(MultiAgentEnv):
         self.infos = {}
 
         _ = self.reset()
+
+
+    def _wrap_env(self):
+        # Wraps env object in provided wrapper functions
+        if 'wrappers' in self.config.keys():
+            for wrapper_dict in self.config['wrappers']:
+
+                if 'named_params' in wrapper_dict.keys():
+                    self.aec_env = wrapper_dict['wrapper_function'](env=self.aec_env, **wrapper_dict['named_params'])
+                    print(str(wrapper_dict['wrapper_function'])+" :")
+                    print(self.aec_env.observation_spaces)
+                else:
+                    self.aec_env = wrapper_dict['wrapper_function'](env=self.aec_env)
 
     def _init_dicts(self):
         # initialize with zero

@@ -7,11 +7,10 @@ except ImportError:
     from ray.rllib.agents.registry import get_agent_class
 from ray.tune.registry import register_env
 from pettingzoo.mpe import simple_spread_v0
-from supersuit import continuous_actions
 
 '''For this script, you need:
 1. Algorithm name and according module, e.g.: 'PPo' + agents.ppo as agent
-2. Name of the aec game you want to train on, e.g.: 'prison'.
+2. Name of the aec game you want to train on, e.g.: 'simple'.
 3. num_cpus
 4. num_rollouts
 
@@ -27,9 +26,9 @@ num_rollouts = 2
 config = deepcopy(get_agent_class(alg_name)._default_config)
 
 # 2. Register env
-register_env('prison', lambda env_config: POMGameEnv(env_config=env_config, env_creator=env_cls.env))
+register_env('simple', lambda env_config: POMGameEnv(env_config=env_config, env_creator=env_cls.env))
 
-# 3. Get space dimensions
+# 3. Extract space dimensions
 test_env = POMGameEnv(env_config=config, env_creator=env_cls.env)
 obs_space = test_env.observation_space
 act_space = test_env.action_space
@@ -54,10 +53,8 @@ config['no_done_at_end'] = False
 
 
 # 6. Initialize ray and trainer object
-ray.init(num_cpus=num_cpus+1)
+ray.init(num_cpus=num_cpus)
 
 # 7. Train once
-trainer = get_agent_class(alg_name)(env='prison', config=config)
+trainer = get_agent_class(alg_name)(env='simple', config=config)
 trainer.train()
-
-# 8. Apply the trainer

@@ -1,4 +1,3 @@
-from pettingzoo.utils.rllib.pom_game_wrapper import POMGameEnv
 from copy import deepcopy
 import ray
 try:
@@ -6,7 +5,12 @@ try:
 except ImportError:
     from ray.rllib.agents.registry import get_agent_class
 from ray.tune.registry import register_env
-from typing import Dict, Tuple
+from pettingzoo.utils.rllib.pom_game_wrapper import POMGameEnv
+from pettingzoo.gamma import prison_v0
+from supersuit import normalize_obs, dtype, color_reduction
+
+from numpy import float32
+
 
 '''For this script, you need:
 1. Algorithm name and according module, e.g.: 'PPo' + agents.ppo as agent
@@ -18,44 +22,36 @@ Does require SuperSuit
 '''
 
 alg_name = 'PPO'
-game_name = 'prison'
-num_cpus= 2
+env_cls = prison_v0
+num_cpus= 1
 num_rollouts = 2
 
+# 1. Get's default training configuration and specifies the POMgame to load.
+config = deepcopy(get_agent_class(alg_name)._default_config)
 
-# 1. Get's default training configuration and specifies the AECgame to load.
-def get_default_config_with_aec(alg_name='PPO', game_name='prison'):
-    agent_cls = get_agent_class(alg_name)
-    config = deepcopy(agent_cls._default_config)
+# 2. Adding range scale to demonstrate wrapper functionality
+config['env_config']['wrappers'] = [{'wrapper_function': dtype,
+                                     'named_params': {'dtype': float32}},
+                                    {'wrapper_function': color_reduction,
+                                     'named_params': {'mode': 'R'}},
 
-    def add_game_name(config, game_name) -> Dict:
-        config['env_config'] = {'aec_env': game_name, 'run': alg_name}
-        return config
+                                    ]
+config['env_config']['game_args'] = None
 
-    return add_game_name(config, game_name)
+#ToDo: Debugging, testing, documentation
 
+# 3. Register env
+register_env('prison', lambda config: POMGameEnv(env_config=config, env_creator=env_cls.env))
 
-custom_config = get_default_config_with_aec(alg_name=alg_name,
-                                            game_name=game_name)
+# 4. Extract space dimensions
+test_env = POMGameEnv(env_config=config['env_config'], env_creator=env_cls.env)
+obs_space = test_env.observation_space
+act_space = test_env.action_space
+test_env.aec_env.render()
+test_env.close()
 
-
-# 2. Register env
-register_env(game_name, lambda env_config: POMGameEnv(env_config))
-
-
-# 3. Extracts action_spaces and observation_spaces from environment instance
-def get_spaces(input_config) -> Tuple:
-    test_env = POMGameEnv(input_config['env_config'])
-    obs = test_env.observation_space
-    act = test_env.action_space
-    test_env.close()
-    return obs, act
-
-
-obs_space, act_space = get_spaces(input_config=custom_config)
-
-# 4. Configuration for multiagent setup with policy sharing:
-custom_config["multiagent"] = {
+# 5. Configuration for multiagent setup with policy sharing:
+config["multiagent"] = {
         "policies": {
             # the first tuple value is None -> uses default policy
             "av": (None, obs_space, act_space, {}),
@@ -63,26 +59,21 @@ custom_config["multiagent"] = {
         "policy_mapping_fn": lambda agent_id: 'av'
         }
 
-# 5. Initialize ray and trainer object
-ray.init(num_cpus=num_cpus+1)
-
-# 6. Adding range scale to demonstrate wrapper functionality
-custom_config['env_config']['normalize_obs'] = True
-custom_config['env_config']['game_args'] = None
-
-
-# custom_config['normalize_actions'] = True  # Not working at the moment.
-custom_config['log_level'] = 'DEBUG'
-custom_config['num_workers'] = 1
-custom_config['sample_batch_size'] = 30     # Fragment length, collected at once from each worker and for each agent!
-custom_config['train_batch_size'] = 200     # Training batch size -> Fragments are concatenated up to this point.
-custom_config['horizon'] = 200              # After n steps, force reset simulation
-custom_config['no_done_at_end'] = False     # Default: False
+config['log_level'] = 'DEBUG'
+config['num_workers'] = 1
+config['sample_batch_size'] = 30     # Fragment length, collected at once from each worker and for each agent!
+config['train_batch_size'] = 200     # Training batch size -> Fragments are concatenated up to this point.
+config['horizon'] = 200              # After n steps, force reset simulation
+config['no_done_at_end'] = False     # Default: False
 # Info: If False, each agents trajectory is expected to have maximum one done=True in the last step of the trajectory.
 # If no_done_at_end = True, environment is not resetted when dones[__all__]= True.
 
-print(custom_config['env_config'])
-trainer = get_agent_class(alg_name)(env=game_name, config=custom_config)
+
+# 6. Initialize ray and trainer object
+ray.init(num_cpus=num_cpus+1)
+trainer = get_agent_class(alg_name)(env='prison', config=config)
 
 # 7. Train once
 trainer.train()
+
+test_env.reset()
