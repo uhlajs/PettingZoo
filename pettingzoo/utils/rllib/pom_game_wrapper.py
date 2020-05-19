@@ -1,5 +1,4 @@
 from ray.rllib.env import MultiAgentEnv
-from pettingzoo.utils.rllib.pom_registry import get_game_class
 from supersuit import color_reduction, continuous_actions, down_scale, dtype, flatten, frame_stack, normalize_obs, \
                       reshape
 
@@ -57,107 +56,42 @@ class POMGameEnv(MultiAgentEnv):
         }
     """
 
-    def __init__(self, env_config):
+    def __init__(self, env_config, env_creator: object):
         """
         env_config: Dict, specifies:
-                    - PettingZoo game used. Consult pom_registry for all games that can be used as a POM game.
-                    - Possible SuperSuit wrappers and possible wrapper parameters. Available wrappers:
-                        - color_reduction
-                        - continuous_actions
-                        - down_scale
-                        - dtype
-                        - flatten
-                        - frame_stack
-                        - normalize_obs
-                        - reshape
                     - Optional game-dependent parameters.
+                    - Optional SuperSuit wrappers.
+                    - Optional flag 'se
 
-        Example:
-            env_config = {
-                'aec_env': 'prison',
-                'normalize_obs': True,
-                'game_args': None
-            }
+                    - Example:
+                        env_config = {
+                            'game_args': None,      # Optional dict:
+                                                    # Passed to environment, when constructed.
+                            'wrappers': []          # Optional List[Dict]:
+                                                    # SuperSuit wrappers, that the env is wrapped in.
+                            'set_all_done': False,  # Optional Bool, Default: True:
+                                                    # If True: when single agent is done, rollout ends and env resets.
+                        }
+
+        env_creator: function, which is called to instantiate an env object.
         """
 
-        # choose the game
-        if 'aec_env' in env_config.keys():
-
-            # Unpack all optional environment params
-            if 'game_args' in env_config.keys() and isinstance(env_config['game_args'], dict):
-                self.aec_env = get_game_class(env_config['aec_env']).env(**env_config['game_args'])
-            else:
-                self.aec_env = get_game_class(env_config['aec_env']).env()
+        # Unpack all optional environment params
+        if 'game_args' in env_config.keys() and isinstance(env_config['game_args'], dict):
+            self.aec_env = env_creator(**env_config['game_args'])
         else:
-            raise ValueError('POM game not specified. Consult utils/pom_registry.py to see valid inputs.')
+            self.aec_env = env_creator()
 
-        # if flag is specified and False, then disable functionality in
+        if 'wrappers' in env_config.keys():
+            for wrapper_dict in env_config['wrappers']:
+                self.aec_env = wrapper_dict['wrapping_function'](env=self.aec_env, **wrapper_dict['named_params'])
+
+        # If True (default): When single agent is done, rollout ends and env is reseted.
         if 'set_all_done' in env_config.keys() and not env_config['set_all_done']:
             self.set_all_done = False
         else:
             # Default behavior if not specified
             self.set_all_done = True
-
-        # SuperSuit wrappers
-        if 'color_reduction' in env_config.keys():
-            self.aec_env = color_reduction(env=self.aec_env, mode=env_config['color_reduction'])
-
-        if 'continuous_actions' in env_config.keys():
-            if isinstance(env_config['continuous_actions'], bool):
-                self.aec_env = continuous_actions(env=self.aec_env)
-
-            elif isinstance(env_config['continuous_actions'], int):
-                self.aec_env = continuous_actions(env=self.aec_env, seed=env_config[continuous_actions])
-
-            else:
-                raise ValueError("Wrong config param data type. Consult class description.")
-
-        if 'down_scale' in env_config.keys():
-            if isinstance(env_config['down_scale'], bool):
-                self.aec_env = down_scale(env=self.aec_env)
-
-            elif isinstance(env_config['down_scale'], tuple):
-                self.aec_env = down_scale(env=self.aec_env,
-                                          x_scale=env_config['down_scale'][0],
-                                          y_scale=env_config['down_scale'][1])
-
-        if 'dtype' in env_config.keys():
-            self.aec_env = dtype(env=self.aec_env, dtype=env_config['dtype'])
-
-        if 'flatten' in env_config.keys():
-            self.aec_env = flatten(env=self.aec_env)
-
-        if 'frame_stack' in env_config.keys():
-            if isinstance(env_config['frame_stack'], bool):
-                self.aec_env = frame_stack(env=self.aec_env)
-
-            elif isinstance(env_config['frame_stack'], int):
-                self.aec_env = frame_stack(env=self.aec_env, num_frames=env_config['frame_stack'])
-
-        if 'normalize_obs' in env_config.keys():
-            if isinstance(env_config['normalize_obs'], bool):
-                self.aec_env = normalize_obs(env=self.aec_env)
-
-            elif isinstance(env_config['normalize_obs'], tuple):
-                self.aec_env = normalize_obs(env=self.aec_env,
-                                             env_min=env_config['frame_stack'][0],
-                                             env_max=env_config['frame_stack'][1])
-
-        if 'reshape' in env_config.keys():
-            if isinstance(env_config['reshape'], tuple):
-                self.aec_env = reshape(env=self.aec_env,shape=env_config['reshape'])
-
-
-        """
-        if 'agent_indicator' in env_config.keys():
-            self.aec_env = agent_indicator(self.aec_env)
-            
-        if 'pad_action_space' in env_config.keys():
-            self.aec_env = pad_action_space(self.aec_env)
-            
-        if 'pad_observations' in env_config.keys():
-            self.aec_env = pad_observations(self.aec_env) 
-        """
 
         # agent idx list
         self.agents = self.aec_env.agents
