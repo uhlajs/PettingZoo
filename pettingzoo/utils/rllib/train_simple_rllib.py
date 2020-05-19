@@ -23,12 +23,8 @@ env_cls = simple_spread_v0
 num_cpus= 1
 num_rollouts = 2
 
-
 # 1. Get's default training configuration and specifies the POMgame to load.
-alg_name='PPO'
-agent_cls = get_agent_class(alg_name)
-config = deepcopy(agent_cls._default_config)
-config['env_config'] = {'run': alg_name}
+config = deepcopy(get_agent_class(alg_name)._default_config)
 
 # 2. Register env
 register_env('prison', lambda env_config: POMGameEnv(env_config=env_config, env_creator=env_cls.env))
