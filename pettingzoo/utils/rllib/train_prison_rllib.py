@@ -34,11 +34,9 @@ config['env_config']['wrappers'] = [{'wrapper_function': dtype,
                                      'named_params': {'dtype': float32}},
                                     {'wrapper_function': color_reduction,
                                      'named_params': {'mode': 'R'}},
-
+                                     {'wrapper_function': normalize_obs}
                                     ]
 config['env_config']['game_args'] = None
-
-#ToDo: Debugging, testing, documentation
 
 # 3. Register env
 register_env('prison', lambda config: POMGameEnv(env_config=config, env_creator=env_cls.env))

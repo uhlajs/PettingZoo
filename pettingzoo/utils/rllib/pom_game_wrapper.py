@@ -2,6 +2,7 @@ from ray.rllib.env import MultiAgentEnv
 
 class POMGameEnv(MultiAgentEnv):
     """An interface to the PettingZoo MARL environment library.
+    See: https://github.com/PettingZoo-Team/PettingZoo
 
     Inherits from MultiAgentEnv and exposes a given AEC
     (actor-environment-cycle) game from the PettingZoo project via the
@@ -15,8 +16,8 @@ class POMGameEnv(MultiAgentEnv):
     3. Agents act simultaneously (-> No hard-turn games like chess).
     4. Environments are positive sum games (-> Agents are expected to cooperate to maximize reward).
     5. All agents have the same action_spaces and observation_spaces.
-    Note: If, within your aec game, agents do not have homogeneous action / observation spaces, use the wrapper class
-    from PettingZoo to apply padding functionality.
+    Note: If, within your aec game, agents do not have homogeneous action / observation spaces, apply SuperSuit wrappers
+    to apply padding functionality: https://github.com/PettingZoo-Team/SuperSuit#built-in-multi-agent-only-functions
     6. By default: If all agents are done, the simulation signals termination and is restarted.
 
     Examples:
@@ -129,8 +130,6 @@ class POMGameEnv(MultiAgentEnv):
 
                 if 'named_params' in wrapper_dict.keys():
                     self.aec_env = wrapper_dict['wrapper_function'](env=self.aec_env, **wrapper_dict['named_params'])
-                    print(str(wrapper_dict['wrapper_function'])+" :")
-                    print(self.aec_env.observation_spaces)
                 else:
                     self.aec_env = wrapper_dict['wrapper_function'](env=self.aec_env)
 
@@ -204,7 +203,7 @@ class POMGameEnv(MultiAgentEnv):
                 # Update done status
                 self.dones[agent] = self.aec_env.dones[agent]
 
-            # For agents with done = True, remove from dones, rewards and observationss
+            # For agents with done = True, remove from dones, rewards and observations
             else:
                 del self.dones[agent]
                 del self.rewards[agent]
