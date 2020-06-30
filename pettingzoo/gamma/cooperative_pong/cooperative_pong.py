@@ -377,8 +377,7 @@ class raw_env(AECEnv):
 
         self.agents = self.env.agents
         self.num_agents = len(self.agents)
-        self.agent_order = self.agents[:]
-        self._agent_selector = agent_selector(self.agent_order)
+        self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.reset()
         # spaces
         self.action_spaces = dict(zip(self.agents, self.env.action_space))
@@ -398,6 +397,9 @@ class raw_env(AECEnv):
     def reset(self, observe=True):
         self.env.reset()
         self.agent_selection = self._agent_selector.reset()
+        self.rewards = self.env.rewards
+        self.dones = self.env.dones
+        self.infos = self.env.infos
         if observe:
             return self.observe(self.agent_selection)
 
@@ -423,7 +425,7 @@ class raw_env(AECEnv):
         # select next agent and observe
         self.agent_selection = self._agent_selector.next()
         self.rewards = self.env.rewards
-        self.dones = self.env.dones
+        self.dones[agent] = self.env.dones[agent]
         self.infos = self.env.infos
 
         self.score = self.env.score

@@ -1,4 +1,4 @@
-from pettingzoo.utils import save_observation
+from pettingzoo.utils.observation_saver import save_observation
 import gym
 import numpy as np
 
@@ -13,9 +13,10 @@ def check_save_obs(env):
 
 
 def test_save_obs(env):
+    env.reset()
     try:
         check_save_obs(env)
-        for agent in env.agent_order:
+        for agent in env.agent_iter(env.num_agents):
             save_observation(env=env, agent=agent, save_dir="saved_observations")
 
     except AssertionError as ae:

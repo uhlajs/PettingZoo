@@ -85,11 +85,11 @@ class raw_env(AECEnv):
         # super().__init__()
         self.num_agents = 2 * num_floors
         self.agents = ["prisoner_" + str(s) for s in range(0, self.num_agents)]
-        self.agent_order = self.agents[:]
-        self._agent_selector = agent_selector(self.agent_order)
+        self._agent_selector = agent_selector(self.agents)
         self.sprite_list = ["sprites/alien", "sprites/drone", "sprites/glowy", "sprites/reptile", "sprites/ufo", "sprites/bunny", "sprites/robot", "sprites/tank"]
         self.sprite_img_heights = [40, 40, 46, 48, 32, 54, 48, 53]
         self.metadata = {'render.modes': ['human']}
+        self.infos = {}
         self.rendering = False
         self.max_frames = max_frames
         pygame.init()
@@ -188,6 +188,10 @@ class raw_env(AECEnv):
             map_tuple_1 = (1, f)
             self.prisoner_mapping[map_tuple_0] = map_count
             self.prisoner_mapping[map_tuple_1] = map_count + 1
+            prisoner0_name = "prisoner_" + str(map_count)
+            prisoner1_name = "prisoner_" + str((map_count + 1))
+            self.infos[prisoner0_name] = map_tuple_0
+            self.infos[prisoner1_name] = map_tuple_1
             map_count += 2
         p_count = 0
         for p in prisoner_spawn_locs:
@@ -284,7 +288,7 @@ class raw_env(AECEnv):
         self.rewards = dict(zip(self.agents, [0 for _ in self.agents]))
         self.dones = dict(zip(self.agents, [False for _ in self.agents]))
         self.infos = dict(zip(self.agents, [{} for _ in self.agents]))
-        self._agent_selector.reinit(self.agent_order)
+        self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.next()
         self.num_frames = 0
         self.reinit()

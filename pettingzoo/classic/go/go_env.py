@@ -36,8 +36,7 @@ class raw_env(AECEnv):
         self.observation_spaces = self._convert_to_dict([spaces.Box(low=0, high=1, shape=(self._N, self._N, 3), dtype=np.bool) for _ in range(self.num_agents)])
         self.action_spaces = self._convert_to_dict([spaces.Discrete(self._N * self._N + 1) for _ in range(self.num_agents)])
 
-        self.agent_order = self.agents
-        self._agent_selector = agent_selector(self.agent_order)
+        self._agent_selector = agent_selector(self.agents)
 
     def _overwrite_go_global_variables(self, board_size: int):
         self._N = board_size
@@ -53,16 +52,16 @@ class raw_env(AECEnv):
 
     def _encode_player_plane(self, agent):
         if agent == self.agents[0]:
-            return np.zeros([self._N, self._N], dtype=np.uint8)
+            return np.zeros([self._N, self._N], dtype=np.bool)
         else:
-            return np.ones([self._N, self._N], dtype=np.uint8)
+            return np.ones([self._N, self._N], dtype=np.bool)
 
     def _encode_board_planes(self, agent):
         agent_factor = -1 if agent == self.agents[0] else 1
         current_agent_plane_idx = np.where(self._go.board == agent_factor)
         opponent_agent_plane_idx = np.where(self._go.board == -agent_factor)
-        current_agent_plane = np.zeros([self._N, self._N], dtype=np.uint8)
-        opponent_agent_plane = np.zeros([self._N, self._N], dtype=np.uint8)
+        current_agent_plane = np.zeros([self._N, self._N], dtype=np.bool)
+        opponent_agent_plane = np.zeros([self._N, self._N], dtype=np.bool)
         current_agent_plane[current_agent_plane_idx] = 1
         opponent_agent_plane[opponent_agent_plane_idx] = 1
         return current_agent_plane, opponent_agent_plane

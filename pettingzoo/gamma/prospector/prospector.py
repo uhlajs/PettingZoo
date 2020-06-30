@@ -31,10 +31,7 @@ class Prospector(pg.sprite.Sprite):
     def __init__(self, pos, space, num, *sprite_groups):
         super().__init__(sprite_groups)
         # self.image = load_image(['prospec.png'])
-        self.image = utils.load_image(["prospector-pickaxe-big.png"])
-        self.image = pg.transform.scale(
-            self.image, (int(const.AGENT_RADIUS * 2), int(const.AGENT_RADIUS * 2))
-        )
+        self.image = utils.load_image(["prospector-pickaxe.png"])
 
         self.id = num
 
@@ -42,14 +39,11 @@ class Prospector(pg.sprite.Sprite):
         self.orig_image = self.image
 
         # Create the physics body and shape of this object.
-        # moment = pm.moment_for_poly(mass, vertices)
-
         moment = pm.moment_for_circle(1, 0, self.rect.width / 2)
 
         self.body = pm.Body(1, moment)
         self.body.nugget = None
         self.body.sprite_type = "prospector"
-        # self.shape = pm.Poly(self.body, vertices, radius=3)
 
         self.shape = pm.Circle(self.body, const.AGENT_RADIUS)
         self.shape.elasticity = 0.0
@@ -85,9 +79,8 @@ class Prospector(pg.sprite.Sprite):
         self.body.velocity = Vec2d(x_vel, y_vel).rotated(self.body.angle)
 
         self.rect.center = utils.flipy(self.body.position)
-        self.image = pg.transform.rotozoom(
-            self.orig_image, math.degrees(self.body.angle), 1
-        )
+        self.image = pg.transform.rotate(self.orig_image, math.degrees(self.body.angle))
+
         self.rect = self.image.get_rect(center=self.rect.center)
 
         curr_vel = self.body.velocity
@@ -110,10 +103,7 @@ class Prospector(pg.sprite.Sprite):
 class Banker(pg.sprite.Sprite):
     def __init__(self, pos, space, num, *sprite_groups):
         super().__init__(sprite_groups)
-        self.image = utils.load_image(["bankers", "%s-big.png" % num])
-        self.image = pg.transform.scale(
-            self.image, (int(const.AGENT_RADIUS * 2), int(const.AGENT_RADIUS * 2))
-        )
+        self.image = utils.load_image(["bankers", "%s.png" % num])
 
         self.id = num
 
@@ -156,15 +146,15 @@ class Banker(pg.sprite.Sprite):
         angle_radians = math.atan2(y_vel, x_vel) - (math.pi / 2)
 
         # Angle is determined only by current trajectory.
-        self.body.angle = angle_radians
+        if not all(a == 0 for a in action):
+            self.body.angle = angle_radians
         self.body.angular_velocity = 0
 
         self.body.velocity = Vec2d(x_vel, y_vel)
 
         self.rect.center = utils.flipy(self.body.position)
-        self.image = pg.transform.rotozoom(
-            self.orig_image, math.degrees(self.body.angle), 1
-        )
+        self.image = pg.transform.rotate(self.orig_image, math.degrees(self.body.angle))
+
         self.rect = self.image.get_rect(center=self.rect.center)
 
         curr_vel = self.body.velocity
@@ -189,16 +179,11 @@ class Fence(pg.sprite.Sprite):
         super().__init__(sprite_groups)
 
         if w_type == "top":
-            # self.image = utils.load_image(["horiz-fence.png"])
             self.image = utils.load_image(["top-down-horiz-fence.png"])
         elif w_type in ["right", "left"]:
-            # self.image = utils.load_image(["vert-fence.png"])
             self.image = utils.load_image(["top-down-vert-fence.png"])
         else:
             raise ValueError("Fence image not found! Check the spelling")
-        # elif w_type == "left":
-        #     # self.image = utils.load_image(["vert-fence.png"])
-        #     self.image = utils.load_image(["top-down-vert-fence.png"])
 
         self.rect = self.image.get_rect(topleft=sprite_pos)
 
@@ -235,7 +220,6 @@ class Water(pg.sprite.Sprite):
         self.shape = pm.Poly(self.body, invert_verts)
         self.shape.collision_type = CollisionTypes.WATER
 
-        # self.shape.friction = 1.0
         self.body.position = utils.flipy(pos)
         self.space = space
         self.space.add(self.shape)
@@ -316,7 +300,7 @@ class Gold(pg.sprite.Sprite):
 def env(**kwargs):
     env = raw_env(**kwargs)
     env = wrappers.ClipOutOfBoundsWrapper(env)
-    env = wrappers.NanNoOpWrapper(env, [0, 0, 0], "setting action to 0")
+    env = wrappers.NanZerosWrapper(env)
     env = wrappers.OrderEnforcingWrapper(env)
     return env
 
@@ -324,6 +308,7 @@ def env(**kwargs):
 class raw_env(AECEnv):
     def __init__(
         self,
+        seed=None,
         ind_reward=0.8,
         group_reward=0.1,
         other_group_reward=0.1,
@@ -332,7 +317,6 @@ class raw_env(AECEnv):
         banker_receive_gold_reward=1,
         banker_deposit_gold_reward=1,
         max_frames=900,
-        seed=None,
     ):
         if ind_reward + group_reward + other_group_reward != 1.0:
             raise ValueError(
@@ -341,7 +325,6 @@ class raw_env(AECEnv):
             )
 
         self.num_agents = const.NUM_AGENTS
-        # self.agents = list(range(0, self.num_agents))
         self.agents = []
 
         self.sprite_list = [
@@ -369,13 +352,13 @@ class raw_env(AECEnv):
         self.space.gravity = Vec2d(0.0, 0.0)
         self.space.damping = 0.0
 
-        # self.all_sprites = pg.sprite.Group()
         self.all_sprites = pg.sprite.RenderUpdates()
         self.gold = []
 
         # Generate random positions for each prospector agent
         prospector_info = [
-            (i, utils.rand_pos("prospector", self.rng)) for i in range(const.NUM_PROSPECTORS)
+            (i, utils.rand_pos("prospector", self.rng))
+            for i in range(const.NUM_PROSPECTORS)
         ]
         self.prospectors = {}
         for num, pos in prospector_info:
@@ -384,7 +367,9 @@ class raw_env(AECEnv):
             self.prospectors[identifier] = prospector
             self.agents.append(identifier)
 
-        banker_info = [(i, utils.rand_pos("banker", self.rng)) for i in range(const.NUM_BANKERS)]
+        banker_info = [
+            (i, utils.rand_pos("banker", self.rng)) for i in range(const.NUM_BANKERS)
+        ]
         self.bankers = {}
         for num, pos in banker_info:
             banker = Banker(pos, self.space, num, self.all_sprites)
@@ -405,22 +390,30 @@ class raw_env(AECEnv):
 
         self.action_spaces = {}
         for p in self.prospectors:
-            self.action_spaces[p] = spaces.Box(low=np.float32(-1.), high=np.float32(1.), shape=(3,))
+            self.action_spaces[p] = spaces.Box(
+                low=np.float32(-1.0), high=np.float32(1.0), shape=(3,)
+            )
 
         for b in self.bankers:
-            self.action_spaces[b] = spaces.Box(low=np.float32(-1.), high=np.float32(1.), shape=(3,))
+            self.action_spaces[b] = spaces.Box(
+                low=np.float32(-1.0), high=np.float32(1.0), shape=(2,)
+            )
 
         self.observation_spaces = {}
         self.last_observation = {}
-        for a in self.agents:
-            self.last_observation[a] = None
-            # low, high for RGB values
-            self.observation_spaces[a] = spaces.Box(
-                low=0, high=255, shape=const.OBSERVATION_SHAPE, dtype=np.uint8
+        for p in self.prospectors:
+            self.last_observation[p] = None
+            self.observation_spaces[p] = spaces.Box(
+                low=0, high=255, shape=const.PROSPEC_OBSERV_SHAPE, dtype=np.uint8
             )
 
-        self.agent_order = self.agents[:]
-        self._agent_selector = agent_selector(self.agent_order)
+        for b in self.bankers:
+            self.last_observation[b] = None
+            self.observation_spaces[b] = spaces.Box(
+                low=0, high=255, shape=const.BANKER_OBSERV_SHAPE, dtype=np.uint8
+            )
+
+        self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.next()
         self.reset()
 
@@ -516,7 +509,6 @@ class raw_env(AECEnv):
                 for k, v in self.bankers.items():
                     if v.body is banker_body:
                         self.rewards[k] += banker_deposit_gold_reward
-                        # banker_sprite = v
                     else:
                         self.rewards[k] += group_reward * banker_deposit_gold_reward
 
@@ -551,29 +543,44 @@ class raw_env(AECEnv):
         capture = pg.surfarray.pixels3d(self.screen)
         if agent in self.prospectors:
             ag = self.prospectors[agent]
+            side_len = const.PROSPEC_OBSERV_SIDE_LEN
         else:
             ag = self.bankers[agent]
+            side_len = const.BANKER_OBSERV_SIDE_LEN
 
-        assert ag is not None
-
-        delta = const.OBSERVATION_SIDE_LENGTH // 2
+        delta = side_len // 2
         x, y = ag.center  # Calculated property added to prospector and banker classes
-        sub_screen = np.array(capture[
-            max(0, x - delta): min(const.SCREEN_WIDTH, x + delta),
-            max(0, y - delta): min(const.SCREEN_HEIGHT, y + delta), :], dtype=np.uint8)
+        sub_screen = np.array(
+            capture[
+                max(0, x - delta): min(const.SCREEN_WIDTH, x + delta),
+                max(0, y - delta): min(const.SCREEN_HEIGHT, y + delta), :,
+            ],
+            dtype=np.uint8,
+        )
 
         s_x, s_y, _ = sub_screen.shape
-        pad_x = const.OBSERVATION_SIDE_LENGTH - s_x
+        pad_x = side_len - s_x
         if x > const.SCREEN_WIDTH - delta:  # Right side of the screen
-            sub_screen = np.pad(sub_screen, pad_width=((0, pad_x), (0, 0), (0, 0)), mode='constant')
+            sub_screen = np.pad(
+                sub_screen, pad_width=((0, pad_x), (0, 0), (0, 0)), mode="constant"
+            )
         elif x < 0 + delta:
-            sub_screen = np.pad(sub_screen, pad_width=((pad_x, 0), (0, 0), (0, 0)), mode='constant')
+            sub_screen = np.pad(
+                sub_screen, pad_width=((pad_x, 0), (0, 0), (0, 0)), mode="constant"
+            )
 
-        pad_y = const.OBSERVATION_SIDE_LENGTH - s_y
+        pad_y = side_len - s_y
         if y > const.SCREEN_HEIGHT - delta:  # Bottom of the screen
-            sub_screen = np.pad(sub_screen, pad_width=((0, 0), (0, pad_y), (0, 0)), mode='constant')
+            sub_screen = np.pad(
+                sub_screen, pad_width=((0, 0), (0, pad_y), (0, 0)), mode="constant"
+            )
         elif y < 0 + delta:
-            sub_screen = np.pad(sub_screen, pad_width=((0, 0), (pad_y, 0), (0, 0)), mode='constant')
+            sub_screen = np.pad(
+                sub_screen, pad_width=((0, 0), (pad_y, 0), (0, 0)), mode="constant"
+            )
+
+        sub_screen = np.rot90(sub_screen, k=3)
+        sub_screen = np.fliplr(sub_screen).astype(np.uint8)
 
         self.last_observation[agent] = sub_screen
 
@@ -634,8 +641,7 @@ class raw_env(AECEnv):
         self.rendering = False
         self.frame = 0
 
-        self.agent_order = self.agents[:]
-        self._agent_selector.reinit(self.agent_order)
+        self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.next()
         self.draw()
         if observe:
@@ -665,131 +671,5 @@ class raw_env(AECEnv):
                 pg.display.quit()
             pg.quit()
 
-
-# class env(gym.Env):
-#     def __init__(self):
-#         super().__init__()
-#         global agent2, agent1
-#         pygame.init()
-
-#         # Set the width and height of the screen [width, height]
-#         size = (1002, 699)
-#         self.screen = pygame.display.set_mode(size)
-#         background = get_image("background.jpg")
-#         pygame.display.set_caption("My Game")
-#         self.screen.blit(background, (0, 0))
-#         self.area = self.screen.get_rect()
-
-#         # Loop until the user clicks the close button.
-#         done = False
-
-#         # Used to manage how fast the screen updates
-#         clock = pygame.time.Clock()
-#         agent1 = agent1(size, x=50, y=50, speed=20)
-#         agent2 = agent2(size)
-
-#         block_list, all_sprites_list = self.create_targets()
-
-#         vis = pygame.sprite.Group()  # Visualize block that is being carried by agent 1
-#         vis2 = pygame.sprite.Group()  # Visualize block that is being carried by agent 2
-#         block_picked = None
-#         block_transfered = None
-#         flag = 0
-#         blocks_hit_list = []
-#         # cropped = pygame.Surface((100,100))
-
-#         # -------- Main Program Loop -----------
-#         while not done:
-#             # --- Main event loop
-#             for event in pygame.event.get():
-#                 if event.type == pygame.QUIT:
-#                     done = True
-
-#             self.screen.blit(background, (0, 0))
-#             self.screen.blit(agent1.image, agent1.rect)
-#             # cropped.blit(agent1.image, (agent1.rect.x,agent1.rect.y))
-#             self.screen.blit(agent2.image, agent2.rect)
-#             pos = pygame.mouse.get_pos()
-#             agent1.update(pos, self.area, agent2)
-#             agent2.update(pos)  # , self.area, agent1)
-#             if flag == 0:
-#                 blocks_hit_list = pygame.sprite.spritecollide(agent1, block_list, True)
-#             pygame.draw.circle(self.screen, RED, agent1.rect.topleft, 5)
-#             while len(blocks_hit_list) > 1:
-#                 block_list.add(blocks_hit_list.pop())
-#             if blocks_hit_list:
-#                 # print(len(blocks_hit_list), len(block_list))
-#                 vis.add(blocks_hit_list[0])
-#                 block_picked = blocks_hit_list[0]
-#                 flag = 1
-#             if block_picked:
-#                 corner = agent1.check_collision(block_picked.rect)
-
-#                 block_picked.update(agent1.rect, corner)
-#                 agent1.rotate_flag = True
-#             # --- Go ahead and update the screen with what we've drawn.
-#             # print(len(block_list))
-#             if agent1.rect.y < 355:
-#                 flag = 0
-#                 block_picked = None
-#                 # agent1.rotate_flag = False
-
-#             blocks_transfer_list = pygame.sprite.spritecollide(agent2, vis, True)
-#             if blocks_transfer_list:
-#                 block_transfered = blocks_transfer_list[0]
-#                 block_transfered.update(agent2.rect)
-#                 vis2.add(block_transfered)
-#                 agent2.change_command()
-#                 block_picked = None
-#                 flag = 0
-
-#             if block_transfered:
-#                 block_transfered.update(agent2.rect)
-#             if agent2.rect.y < 105:
-#                 block_transfered = None
-
-#             block_list.draw(self.screen)
-#             vis.draw(self.screen)
-#             vis2.draw(self.screen)
-#             pygame.display.flip()
-#             clock.tick(10)
-
-#         pygame.quit()
-
-#     def create_targets(self):
-#         block_list = pygame.sprite.Group()
-
-#         # This is a list of every sprite.
-#         # All blocks and the player block as well.
-#         all_sprites_list = pygame.sprite.Group()
-#         x = 20
-#         for i in range(18):
-#             # This represents a block
-#             block = Block()
-#             # Set a random location for the block
-#             block.rect.x = x
-#             x += 75
-#             block.rect.y = 630
-#             # Add the block to the list of objects
-#             block_list.add(block)
-#             all_sprites_list.add(block)
-
-#         return block_list, all_sprites_list
-#     def draw(self):
-#         self.screen.blit(self.background, self.background_rect)
-#         self.all_sprites.draw(self.screen)
-
-#         for p in self.prospectors:
-#             if p.body.nugget is not None:
-#                 p.body.nugget.draw(self.screen)
-
-#         for b in self.bankers:
-#             if b.body.nugget is not None:
-#                 b.body.nugget.draw(self.screen)
-
-#     def close(self):
-#         pg.event.pump()
-#         pg.display.quit()
-#         pg.quit()
 
 # Except for the gold png images, all other sprite art was created by Yashas Lokesh

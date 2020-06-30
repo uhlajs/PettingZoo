@@ -37,9 +37,7 @@ class SimpleEnv(AECEnv):
         self.agents = [agent.name for agent in self.world.agents]
         self._index_map = {agent.name: idx for idx, agent in enumerate(self.world.agents)}
 
-        self.agent_order = list(self.agents)
-
-        self._agent_selector = agent_selector(self.agent_order)
+        self._agent_selector = agent_selector(self.agents)
 
         # set spaces
         self.action_spaces = dict()
@@ -62,7 +60,7 @@ class SimpleEnv(AECEnv):
         self.viewer = None
 
     def observe(self, agent):
-        return self.scenario.observation(self.world.agents[self._index_map[agent]], self.world)
+        return self.scenario.observation(self.world.agents[self._index_map[agent]], self.world).astype(np.float32)
 
     def reset(self, observe=True):
         self.scenario.reset_world(self.world, self.np_random)
@@ -79,8 +77,7 @@ class SimpleEnv(AECEnv):
         self.current_actions = [None] * self.num_agents
 
         if observe:
-            agent = self.world.agents[0]
-            return self.scenario.observation(agent, self.world)
+            return self.observe(self.agent_selection)
         else:
             return
 
@@ -160,9 +157,8 @@ class SimpleEnv(AECEnv):
                 for a in self.agents:
                     self.dones[a] = True
 
-        next_agent = self.world.agents[next_idx]
         if observe:
-            next_observation = self.scenario.observation(next_agent, self.world)
+            next_observation = self.observe(self.agent_selection)
         else:
             next_observation = None
         return next_observation

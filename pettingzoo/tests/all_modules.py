@@ -1,39 +1,43 @@
-from pettingzoo.classic import chess_v0
-from pettingzoo.classic import rps_v0
-from pettingzoo.classic import rpsls_v0
-from pettingzoo.classic import connect_four_v0
-from pettingzoo.classic import tictactoe_v0
-from pettingzoo.classic import leduc_holdem_v0
-from pettingzoo.classic import mahjong_v0
-from pettingzoo.classic import texas_holdem_v0
-from pettingzoo.classic import texas_holdem_no_limit_v0
-from pettingzoo.classic import uno_v0
-from pettingzoo.classic import dou_dizhu_v0
-from pettingzoo.classic import gin_rummy_v0
-from pettingzoo.classic import go_v0
-from pettingzoo.classic import hanabi_v0
+from pettingzoo.atari import *
 
-from pettingzoo.gamma import knights_archers_zombies_v0
-from pettingzoo.gamma import pistonball_v0
-from pettingzoo.gamma import cooperative_pong_v0
-from pettingzoo.gamma import prison_v0
-from pettingzoo.gamma import prospector_v0
+from pettingzoo.classic import *
 
-from pettingzoo.mpe import simple_adversary_v0
-from pettingzoo.mpe import simple_crypto_v0
-from pettingzoo.mpe import simple_push_v0
-from pettingzoo.mpe import simple_reference_v0
-from pettingzoo.mpe import simple_speaker_listener_v0
-from pettingzoo.mpe import simple_spread_v0
-from pettingzoo.mpe import simple_tag_v0
-from pettingzoo.mpe import simple_world_comm_v0
-from pettingzoo.mpe import simple_v0
+from pettingzoo.gamma import *
 
-from pettingzoo.sisl import pursuit_v0
-from pettingzoo.sisl import waterworld_v0
-from pettingzoo.sisl import multiwalker_v0
+from pettingzoo.mpe import *
+
+from pettingzoo.magent import *
+
+from pettingzoo.sisl import *
+
+all_prefixes = ["atari", "classic", "gamma", "magent", "mpe", "sisl"]
 
 all_environments = {
+    "atari/boxing": boxing_v0,
+    "atari/combat_tank": combat_tank_v0,
+    "atari/combat_plane": combat_plane_v0,
+    "atari/double_dunk": double_dunk_v0,
+    "atari/entombed_cooperative": entombed_cooperative_v0,
+    "atari/entombed_competitive": entombed_competitive_v0,
+    "atari/flag_capture": flag_capture_v0,
+    "atari/joust": joust_v0,
+    "atari/ice_hockey": ice_hockey_v0,
+    "atari/maze_craze": maze_craze_v0,
+    "atari/mario_bros": mario_bros_v0,
+    "atari/othello": othello_v0,
+    "atari/pong_classic": pong_classic_v0,
+    "atari/pong_basketball": pong_basketball_v0,
+    "atari/pong_foozpong": pong_foozpong_v0,
+    "atari/pong_quadrapong": pong_quadrapong_v0,
+    "atari/pong_volleyball": pong_volleyball_v0,
+    "atari/space_invaders": space_invaders_v0,
+    "atari/space_war": space_war_v0,
+    "atari/surround": surround_v0,
+    "atari/tennis": tennis_v0,
+    "atari/video_checkers": video_checkers_v0,
+    "atari/wizard_of_wor": wizard_of_wor_v0,
+    "atari/warlords": warlords_v0,
+
     "classic/chess": chess_v0,
     "classic/rps": rps_v0,
     "classic/rpsls": rpsls_v0,
@@ -48,12 +52,20 @@ all_environments = {
     "classic/gin_rummy": gin_rummy_v0,
     "classic/go": go_v0,
     "classic/hanabi": hanabi_v0,
+    "classic/backgammon": backgammon_v0,
 
     "gamma/knights_archers_zombies": knights_archers_zombies_v0,
     "gamma/pistonball": pistonball_v0,
     "gamma/cooperative_pong": cooperative_pong_v0,
     "gamma/prison": prison_v0,
     "gamma/prospector": prospector_v0,
+
+    "magent/battle": battle_v0,
+    "magent/pursuit": adversarial_pursuit_v0,
+    "magent/gather": gather_v0,
+    "magent/combined_arms": combined_arms_v0,
+    "magent/tiger": tiger_deer_v0,
+    "magent/battlefield": battlefield_v0,
 
     "mpe/simple_adversary": simple_adversary_v0,
     "mpe/simple_crypto": simple_crypto_v0,

@@ -9,7 +9,6 @@ from .src.zombie import Zombie
 from .src.weapons import Arrow, Sword
 from .manual_control import manual_control
 import numpy as np
-from skimage import measure
 from pettingzoo import AECEnv
 from pettingzoo.utils import agent_selector
 from gym.spaces import Box, Discrete
@@ -140,8 +139,7 @@ class raw_env(AECEnv):
         self.action_spaces = dict(zip(self.agents, [Discrete(6) for _ in enumerate(self.agents)]))
         self.display_wait = 0.0
 
-        self.agent_order = self.agents[:]
-        self._agent_selector = agent_selector(self.agent_order)
+        self._agent_selector = agent_selector(self.agents)
         self.num_agents = len(self.agents)
         self.reinit()
 
@@ -415,21 +413,6 @@ class raw_env(AECEnv):
             # Controls the Spawn Rate of Weapons
             self.sword_spawn_rate, self.arrow_spawn_rate = self.check_weapon_spawn(self.sword_spawn_rate, self.arrow_spawn_rate)
 
-            # Keyboard input check
-            for event in pygame.event.get():
-                # Quit Game
-                if event.type == pygame.QUIT:
-                    self.run = False
-
-                elif event.type == pygame.KEYDOWN:
-                    # Quit Game
-                    if event.key == pygame.K_ESCAPE:
-                        self.run = False
-
-                    # Reset Environment
-                    if event.key == pygame.K_BACKSPACE:
-                        self.reset(observe=False)
-
         agent_name = self.agent_list[self.agent_name_mapping[agent]]
         action = action + 1
         out_of_bounds = agent_name.update(action)
@@ -516,9 +499,7 @@ class raw_env(AECEnv):
                 self.rewards.pop(k, None)
                 self.infos.pop(k, None)
 
-            # reinit agent_order from agents
-            self.agent_order = self.agents[:]
-            self._agent_selector.reinit(self.agent_order)
+            self._agent_selector.reinit(self.agents)
             self.num_agents = len(self.agents)
 
             # reset the kill list
@@ -623,13 +604,11 @@ class raw_env(AECEnv):
             self.agent_name_mapping[k_name] = a_count
             a_count += 1
 
-        self.agent_order = self.agents[:]
-
         self.frames = 0
 
     def reset(self, observe=True):
         self.has_reset = True
-        self._agent_selector.reinit(self.agent_order)
+        self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.next()
         self.rewards = dict(zip(self.agents, [0 for _ in self.agents]))
         self.dones = dict(zip(self.agents, [False for _ in self.agents]))
