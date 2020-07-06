@@ -43,6 +43,7 @@ class ParallelAtariEnv:
         assert obs_type in ('ram', 'rgb_image', "grayscale_image"), "obs_type must  either be 'ram' or 'rgb_image' or 'grayscale_image'"
         self.obs_type = obs_type
         self.full_action_space = full_action_space
+        self.frameskip = frameskip
         self.num_players = num_players
         self.np_random = seeding.np_random(seed)
 
@@ -53,7 +54,7 @@ class ParallelAtariEnv:
             seed = seeding.create_seed(seed, max_bytes=4)
 
         self.ale.setInt(b"random_seed", seed)
-        self.ale.setInt(b"frame_skip", frameskip)
+        #self.ale.setInt(b"frame_skip", frameskip)
         self.ale.setFloat(b'repeat_action_probability', repeat_action_probability)
 
         pathstart = os.path.dirname(multi_agent_ale_py.__file__)
@@ -95,6 +96,8 @@ class ParallelAtariEnv:
 
         self.action_spaces = [gym.spaces.Discrete(action_size)] * self.num_agents
         self.observation_spaces = [observation_space] * self.num_agents
+        self.old_observation = np.zeros_like(observation_space.low)
+        self.current_observation = np.zeros_like(observation_space.low)
 
         self._screen = None
 
@@ -103,23 +106,40 @@ class ParallelAtariEnv:
 
         return [self._observe()] * self.num_agents
 
-    def _observe(self):
+    def load_and_decay_obs(self):
+        # store old observation for decaying
+        if self.obs_type != 'ram':
+            self.old_observation[:] = self.current_observation
+        # load new observation from emulator
         if self.obs_type == 'ram':
-            bytes = self.ale.getRAM()
-            return bytes
+            self.ale.getRAM(self.current_observation)
         elif self.obs_type == 'rgb_image':
-            return self.ale.getScreenRGB()
+            self.ale.getScreenRGB(self.current_observation)
         elif self.obs_type == 'grayscale_image':
-            return self.ale.getScreenGrayscale()
+            self.ale.getScreenGrayscale(self.current_observation)
+        # decay old emulation data into new data
+        if self.obs_type != 'ram':
+            self.old_observation >>= 2 # /= 4
+            self.current_observation >>= 2
+            self.current_observation *= 3
+            self.current_observation += self.old_observation
+
+    def _observe(self):
+        return self.current_observation
 
     def step(self, actions):
-        rewards = self.ale.act(np.asarray(actions))
-        if self.ale.game_over():
-            dones = [True] * self.num_agents
-        else:
-            lives = self.ale.allLives()
-            # an inactive agent in ale gets a -1 life.
-            dones = [int(life) < 0 for life in lives]
+        rewards = np.zeros(self.num_agents)
+        for i in range(self.frameskip):
+            rewards += self.ale.act(np.asarray(actions))
+
+            self.load_and_decay_obs()
+
+            if self.ale.game_over():
+                dones = [True] * self.num_agents
+            else:
+                lives = self.ale.allLives()
+                # an inactive agent in ale gets a -1 life.
+                dones = [int(life) < 0 for life in lives]
 
         observations = [self._observe()] * self.num_agents
         infos = [{}] * self.num_agents
@@ -133,7 +153,7 @@ class ParallelAtariEnv:
             pygame.init()
             self._screen = pygame.display.set_mode((screen_width * zoom_factor, screen_height * zoom_factor))
 
-        image = self.ale.getScreenRGB()
+        image = self.ale.getScreenRGB() if self.obs_type != 'rgb_image' else self._observe()
 
         myImage = pygame.image.fromstring(image.tobytes(), image.shape[:2][::-1], "RGB")
 
