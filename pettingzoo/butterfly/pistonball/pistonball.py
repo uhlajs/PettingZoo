@@ -14,6 +14,7 @@ from pettingzoo.utils import agent_selector
 from .manual_control import manual_control
 from pettingzoo.utils import wrappers
 from gym.utils import EzPickle
+from pettingzoo.utils.to_parallel import parallel_wrapper_fn
 
 _image_library = {}
 
@@ -36,6 +37,9 @@ def env(**kwargs):
     env = wrappers.NanNoOpWrapper(env, default_val, "setting action to {}".format(default_val))
     env = wrappers.OrderEnforcingWrapper(env)
     return env
+
+
+parallel_env = parallel_wrapper_fn(env)
 
 
 class raw_env(AECEnv, EzPickle):
@@ -263,6 +267,7 @@ class raw_env(AECEnv, EzPickle):
         return np.transpose(observation,axes=(1,0,2))
 
     def step(self, action, observe=True):
+        action = np.asarray(action)
         agent = self.agent_selection
         if self.continuous:
             self.move_piston(self.pistonList[self.agent_name_mapping[agent]], action)

@@ -8,22 +8,24 @@ PettingZoo is a Python library for conducting research in multi-agent reinforcem
 
 We model environments as *Agent Environment Cycle* (AEC) games, in order to be able to support all types of multi-agent RL environments under one API.
 
-Our website with comprehensive documentation is https://pettingzoo-team.github.io/PettingZoo/
+Our website with comprehensive documentation is [pettingzoo.ml](https://www.pettingzoo.ml)
 
-## Environment Types and Installation
+## Environments and Installation
 
-PettingZoo includes the following sets of games:
+PettingZoo includes the following families of environments:
 
-* [Atari](https://pettingzoo-team.github.io/PettingZoo/atari): Multi-player Atari 2600 games (both cooperative and competitive)
-* [Butterfly](https://pettingzoo-team.github.io/PettingZoo/butterfly): Cooperative graphical games developed by us, requiring a high degree of coordination
-* [Classic](https://pettingzoo-team.github.io/PettingZoo/classic): Classical games including card games, board games, etc.
-* [MAgent](https://pettingzoo-team.github.io/PettingZoo/magent): Configurable environments with massive numbers of particle agents, originally from https://github.com/geek-ai/MAgent
-* [MPE](https://pettingzoo-team.github.io/PettingZoo/mpe): A set of simple nongraphical communication tasks, originally from https://github.com/openai/multiagent-particle-envs
-* [SISL](https://pettingzoo-team.github.io/PettingZoo/sisl): 3 cooperative environments, originally from https://github.com/sisl/MADRL
+* [Atari](https://www.pettingzoo.ml/atari): Multi-player Atari 2600 games (both cooperative and competitive)
+* [Butterfly](https://www.pettingzoo.ml/butterfly): Cooperative graphical games developed by us, requiring a high degree of coordination
+* [Classic](https://www.pettingzoo.ml/classic): Classical games including card games, board games, etc.
+* [MAgent](https://www.pettingzoo.ml/magent): Configurable environments with massive numbers of particle agents, originally from https://github.com/geek-ai/MAgent
+* [MPE](https://www.pettingzoo.ml/mpe): A set of simple nongraphical communication tasks, originally from https://github.com/openai/multiagent-particle-envs
+* [SISL](https://www.pettingzoo.ml/sisl): 3 cooperative environments, originally from https://github.com/sisl/MADRL
 
-To install, use `pip install pettingzoo`
+To install the pettingzoo base library, use `pip install pettingzoo`.
 
-We support Python 3.6, 3.7 and 3.8, on Linux and macOS.
+This does not include dependencies for all families of environments (there's a massive number, and some can be problematic to install on certain systems). You can install these dependencies for one family like `pip install pettingzoo[atari]` or use `pip install pettingzoo[all]` to install all dependencies.
+
+We support Python 3.6, 3.7 and 3.8 on Linux and macOS.
 
 ## API
 
@@ -44,13 +46,25 @@ for agent in env.agent_iter():
     observation = env.step(action)
 ```
 
-For the complete API documentation, please see https://pettingzoo-team.github.io/PettingZoo/api
+For the complete API documentation, please see https://www.pettingzoo.ml/api
+
+### Parallel API
+
+In certain environments, it's a valid to assume that agents take their actions at the same time. For these games, we offer a secondary API to allow for parallel actions, documented at https://www.pettingzoo.ml/api#parallel-api
 
 ## SuperSuit
 
 SuperSuit is a library that includes all commonly used wrappers in RL (frame stacking, observation, normalization, etc.) for PettingZoo and Gym environments with a nice API. We developed it in lieu of wrappers built into PettingZoo. https://github.com/PettingZoo-Team/SuperSuit
 
 ## Release History
+
+Version 1.1.0 (August 20, 2020):
+
+Added [ParallelEnv](https://www.pettingzoo.ml/api#parallel-api) API where all agents step at once. Fixed entombed_competitive rewards and bumped environment version to entombed_competitive_v1. Fixed prospector rewards and bumped version to prospector_v1.
+
+Version 1.0.1 (August 12, 2020):
+
+Fixes to continuous made on pistonball and prison environments, along with a bad test that let the problems slip through. Versions bumped on both games.
 
 Version 1.0.0 (August 5th, 2020):
 

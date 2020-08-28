@@ -2,7 +2,7 @@ from pettingzoo.atari import boxing_v0
 from pettingzoo.atari import combat_tank_v0
 from pettingzoo.atari import combat_plane_v0
 from pettingzoo.atari import double_dunk_v0
-from pettingzoo.atari import entombed_competitive_v0
+from pettingzoo.atari import entombed_competitive_v1
 from pettingzoo.atari import entombed_cooperative_v0
 from pettingzoo.atari import flag_capture_v0
 from pettingzoo.atari import joust_v0
@@ -42,8 +42,8 @@ from pettingzoo.classic import backgammon_v0
 from pettingzoo.butterfly import knights_archers_zombies_v0
 from pettingzoo.butterfly import pistonball_v0
 from pettingzoo.butterfly import cooperative_pong_v0
-from pettingzoo.butterfly import prison_v0
-from pettingzoo.butterfly import prospector_v0
+from pettingzoo.butterfly import prison_v1
+from pettingzoo.butterfly import prospector_v1
 
 from pettingzoo.magent import battle_v0
 from pettingzoo.magent import adversarial_pursuit_v0
@@ -68,13 +68,22 @@ from pettingzoo.sisl import multiwalker_v0
 
 all_prefixes = ["atari", "classic", "butterfly", "magent", "mpe", "sisl"]
 
+manual_environments = {
+    "butterfly/knights_archers_zombies",
+    "butterfly/pistonball",
+    "butterfly/cooperative_pong",
+    "butterfly/prison",
+    "butterfly/prospector",
+    "sisl/pursuit"
+}
+
 all_environments = {
     "atari/boxing": boxing_v0,
     "atari/combat_tank": combat_tank_v0,
     "atari/combat_plane": combat_plane_v0,
     "atari/double_dunk": double_dunk_v0,
     "atari/entombed_cooperative": entombed_cooperative_v0,
-    "atari/entombed_competitive": entombed_competitive_v0,
+    "atari/entombed_competitive": entombed_competitive_v1,
     "atari/flag_capture": flag_capture_v0,
     "atari/joust": joust_v0,
     "atari/ice_hockey": ice_hockey_v0,
@@ -113,8 +122,8 @@ all_environments = {
     "butterfly/knights_archers_zombies": knights_archers_zombies_v0,
     "butterfly/pistonball": pistonball_v0,
     "butterfly/cooperative_pong": cooperative_pong_v0,
-    "butterfly/prison": prison_v0,
-    "butterfly/prospector": prospector_v0,
+    "butterfly/prison": prison_v1,
+    "butterfly/prospector": prospector_v1,
 
     "magent/adversarial_pursuit": adversarial_pursuit_v0,
     "magent/battle": battle_v0,

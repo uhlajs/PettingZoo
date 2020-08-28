@@ -7,6 +7,7 @@ from gym import spaces
 from .manual_control import manual_control
 from pettingzoo.utils import wrappers
 from gym.utils import seeding
+from pettingzoo.utils.to_parallel import parallel_wrapper_fn
 from gym.utils import EzPickle
 os.environ['PYGAME_HIDE_SUPPORT_PROMPT'] = 'hide'
 
@@ -51,13 +52,10 @@ class Prisoner:
     def get_sprite(self):
         if self.last_sprite_movement == 0:
             return self.still_sprite
-        elif self.last_sprite_movement == 1:
+        elif self.last_sprite_movement > 0:
             return self.right_sprite
-        elif self.last_sprite_movement == -1:
+        elif self.last_sprite_movement < 0:
             return self.left_sprite
-        else:
-            assert False, ("INVALID STATE", self.state)
-            return self.still_sprite
 
     def update_sprite(self, movement):
         if movement != 0:
@@ -85,6 +83,9 @@ def env(**kwargs):
     env = wrappers.NanNoOpWrapper(env, default_val, "setting action to 0")
     env = wrappers.OrderEnforcingWrapper(env)
     return env
+
+
+parallel_env = parallel_wrapper_fn(env)
 
 
 class raw_env(AECEnv, EzPickle):
@@ -124,7 +125,7 @@ class raw_env(AECEnv, EzPickle):
         self.action_spaces = {}
         if continuous:
             for a in self.agents:
-                self.action_spaces[a] = spaces.Box(low=np.NINF, high=np.Inf, shape=(1,), dtype=np.float32)
+                self.action_spaces[a] = spaces.Box(low=-self.velocity, high=self.velocity, shape=(1,), dtype=np.float32)
         else:
             for a in self.agents:
                 self.action_spaces[a] = spaces.Discrete(3)
@@ -271,7 +272,7 @@ class raw_env(AECEnv, EzPickle):
             p = self.prisoners[agent]
             x = p.position[0]
             obs = [x - p.left_bound]
-            return obs
+            return np.array(obs, dtype=np.float32)
         else:
             capture = pygame.surfarray.pixels3d(self.screen)
             p = self.prisoners[agent]
@@ -307,6 +308,8 @@ class raw_env(AECEnv, EzPickle):
 
     def step(self, action, observe=True):
         # move prisoners, -1 = move left, 0 = do  nothing and 1 is move right
+        if not isinstance(action, int):
+            action = np.asarray(action)
         agent = self.agent_selection
         reward = 0
         if self.continuous:

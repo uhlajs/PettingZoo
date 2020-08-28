@@ -11,6 +11,7 @@ from pettingzoo.utils import wrappers
 from . import constants as const
 from . import utils
 from .manual_control import manual_control
+from pettingzoo.utils.to_parallel import parallel_wrapper_fn
 
 import math
 import os
@@ -444,6 +445,9 @@ def env(**kwargs):
     return env
 
 
+parallel_env = parallel_wrapper_fn(env)
+
+
 class raw_env(AECEnv, EzPickle):
     def __init__(
         self,
@@ -752,6 +756,9 @@ class raw_env(AECEnv, EzPickle):
 
     def step(self, action, observe=True):
         agent_id = self.agent_selection
+        all_agents_updated = self._agent_selector.is_last()
+        if all_agents_updated:
+            self.rewards = {agent: 0 for agent in self.agents}
 
         if agent_id in self.prospectors:
             agent = self.prospectors[agent_id]
@@ -774,7 +781,6 @@ class raw_env(AECEnv, EzPickle):
             self.dirty_rects.extend(gold_bg_rects)
             self.dirty_rects.append(agent.rect)
 
-        all_agents_updated = self._agent_selector.is_last()
         # Only take next step in game if all agents have received an action
         if all_agents_updated:
             if self.rendering:

@@ -84,8 +84,33 @@ All environments end in something like \_v0.  When changes are made to environme
 Environments are by default wrapped in a handful of lightweight wrappers that handle error messages and reasonable behaviors with incorrect usage (such as playing illegal moves or stepping before resetting). However, these add a very small amount of overhead. If you want to create an environment without them, you can do so by using the raw_env constructor contained within each module:
 
 ```
-env = prospector_v0.raw_env(<environment parameters>)
+env = prospector_v1.raw_env(<environment parameters>)
 ```
+
+## Parallel API
+
+In addition to the main API, we have a secondary parallel API for environments with where all agents have simultaneous actions and observations. An environment with parallel API support can be created via `<game>.parallel_env()`. This API is based around the paradigm of *Partially Observable Stochastic Games* (POSGs) and the details are similar to [RLLib's MultiAgent environment specification](https://docs.ray.io/en/latest/rllib-env.html#multi-agent-and-hierarchical), except we allow for different observation and action spaces between the agents.
+
+### Example Usage
+
+Environments can be interacted with as follows:
+
+```
+parallel_env = pistonball_v0.parallel_env()
+observations = parallel_env.reset()
+max_frames = 500
+for step in range(max_frames):
+    actions = {agent: policies[agent](observations[agent]) for agent in parallel_env.agents}
+    observations, rewards, dones, infos = parallel_env.step(actions)
+```
+
+### Full API
+
+`agents`, `num_agents`, `observation_spaces`, and `action_spaces` attributes are available and are as described above in the main API description.
+
+`step(actions)`: receives a dictionary of actions keyed by the agent name. Returns observations dictionary, reward dictionary, done dictionary, info dictionary, where each dictionary is keyed by the agent.
+
+`reset()`: resets the environment and returns a dictionary of observations (keyed by the agent name)
 
 ## SuperSuit
 
@@ -134,8 +159,8 @@ If the environment has `manual_control` functionality included (explained below)
 Often, you want to be able to play before trying to learn it to get a better feel for it. Some of our games directly support this:
 
 ```
-from pettingzoo.butterfly import prison
-prison.manual_control(<environment parameters>)
+from pettingzoo.butterfly import prison_v1
+prison_v1.manual_control(<environment parameters>)
 ```
 
 Environemnts say if they support this functionality in their documentation, and what the specific controls are.
