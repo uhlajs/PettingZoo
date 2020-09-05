@@ -1,6 +1,7 @@
 import logging
 import warnings
 
+
 class EnvLogger():
     mqueue = []
     _output = True

@@ -1,5 +1,6 @@
 from pettingzoo.utils.error import DeprecatedEnv
 
+
 class DepreciatedModule:
     def __init__(self, name, old_version, new_version):
         def env(*args, **kwargs):
