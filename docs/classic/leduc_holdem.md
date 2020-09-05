@@ -8,7 +8,7 @@ action-shape: "Discrete(4)"
 action-values: "(36,)"
 observation-shape: "[0, 1]"
 observation-values: "10^2"
-import: "from pettingzoo.classic import leduc_holdem_v0"
+import: "from pettingzoo.classic import leduc_holdem_v1"
 agent-labels: "agents= ['player_0', 'player_1']"
 ---
 
