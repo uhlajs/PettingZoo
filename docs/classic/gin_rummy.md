@@ -90,4 +90,4 @@ Penalties of deadwood_count/100 ensure that the reward never goes below -1.
 
 #### Legal Moves
 
-The legal moves available for each agent, found in `env.infos[agent]['legal_moves']`, are updated after each step. Taking an illegal move ends the game with a reward of -1 for the illegally moving agent and a reward of 0 for all other agents.
+The legal moves available for each agent, found in `env.infos[agent]['legal_moves']`, are updated after each step. Taking an illegal move assigns a reward of -1 for the illegally moving agent and a reward of 0 for all other agents. The player is then asked to take another move.

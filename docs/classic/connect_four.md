@@ -23,7 +23,7 @@ The observation space is 2 stacks of a 6x7 grid. Each stack represents the place
 
 #### Action Space
 
-The action space is integers from 0 to 6, where the action represents which column a token should be dropped in. If a token is dropped in a column that is full, the game will terminate with an illegal move error. The possible actions each agent can make is stored in infos[agent], and is updated on every step.
+The action space is integers from 0 to 6, where the action represents which column a token should be dropped in. If a token is dropped in a column that is full, that player is penalized and need to make another move. The possible actions each agent can make is stored in infos[agent], and is updated on every step.
 
 #### Rewards
 
@@ -31,4 +31,4 @@ If an agent successfully connects four of their tokens, they will be rewarded 1 
 
 #### Legal Moves
 
-The legal moves available for each agent, found in `env.infos[agent]['legal_moves']`, are updated after each step. Taking an illegal move ends the game with a reward of -1 for the illegally moving agent and a reward of 0 for all other agents.
+The legal moves available for each agent, found in `env.infos[agent]['legal_moves']`, are updated after each step. Taking an illegal move assigns a reward of -1 for the illegally moving agent and a reward of 0 for all other agents. The player is then asked to take another move.
