@@ -1,5 +1,5 @@
 import logging
-
+import warnings
 
 class EnvLogger():
     mqueue = []
@@ -50,7 +50,7 @@ class EnvLogger():
 
     @staticmethod
     def warn_on_illegal_move():
-        EnvLogger._generic_warning("[WARNING]: Illegal move made, game terminating with current player losing. \nenv.infos[player]['legal_moves'] contains a list of all legal moves that can be chosen.")
+        EnvLogger._generic_warning("[WARNING]: Illegal move made, game penalizing current player and giving them another chance to make a legal move. \nenv.infos[player]['legal_moves'] contains a list of all legal moves that can be chosen.")
 
     @staticmethod
     def error_observe_before_reset():
@@ -78,4 +78,4 @@ class EnvWarningHandler(logging.Handler):
         m = self.format(record).rstrip("\n")
         self.mqueue.append(m)
         if EnvLogger._output:
-            print(m)
+            warnings.warn(m)

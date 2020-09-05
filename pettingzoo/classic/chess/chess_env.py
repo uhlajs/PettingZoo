@@ -10,7 +10,7 @@ from pettingzoo.utils import wrappers
 
 def env():
     env = raw_env()
-    env = wrappers.TerminateIllegalWrapper(env, illegal_reward=-1)
+    env = wrappers.PenalizeIllegalWrapper(env, illegal_reward=-1)
     env = wrappers.AssertOutOfBoundsWrapper(env)
     env = wrappers.NaNRandomWrapper(env)
     env = wrappers.OrderEnforcingWrapper(env)

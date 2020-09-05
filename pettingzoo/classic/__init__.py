@@ -1,0 +1,17 @@
+from pettingzoo.utils.depreciated_module import DepreciatedModule
+
+backgammon_v0 = DepreciatedModule("backgammon","v0","v1")
+chess_v0 = DepreciatedModule("chess","v0","v1")
+connect_four_v0 = DepreciatedModule("connect_four","v0","v1")
+dou_dizhu_v0 = DepreciatedModule("dou_dizhu","v0","v1")
+gin_rummy_v0 = DepreciatedModule("gin_rummy","v0","v1")
+go_v0 = DepreciatedModule("go","v0","v1")
+hanabi_v0 = DepreciatedModule("hanabi","v0","v1")
+leduc_holdem_v0 = DepreciatedModule("leduc_holdem","v0","v1")
+mahjong_v0 = DepreciatedModule("mahjong","v0","v1")
+rps_v0 = DepreciatedModule("rps","v0","v1")
+rpsls_v0 = DepreciatedModule("rpsls","v0","v1")
+texas_holdem_no_limit_v0 = DepreciatedModule("texas_holdem_no_limit","v0","v1")
+texas_holdem_v0 = DepreciatedModule("texas_holdem","v0","v1")
+tictactoe_v0 = DepreciatedModule("tictactoe","v0","v1")
+uno_v0 = DepreciatedModule("uno","v0","v1")

@@ -142,7 +142,7 @@ class AECOrderEnforcingIterator(AECIterator):
         return agent
 
 
-class TerminateIllegalWrapper(BaseWrapper):
+class PenalizeIllegalWrapper(BaseWrapper):
     '''
     this wrapper terminates the game with the current player losing
     in case of illegal values
@@ -156,12 +156,9 @@ class TerminateIllegalWrapper(BaseWrapper):
 
     def step(self, action, observe=True):
         current_agent = self.agent_selection
-        assert 'legal_moves' in self.infos[current_agent], "Illegal moves must always be defined to use the TerminateIllegalWrapper"
+        assert 'legal_moves' in self.infos[current_agent], "Illegal moves must always be defined to use the PenalizeIllegalWrapper"
         if action not in self.infos[current_agent]['legal_moves']:
             EnvLogger.warn_on_illegal_move()
-            self.dones = {d: True for d in self.dones}
-            for info in self.infos.values():
-                info['legal_moves'] = []
             self.rewards = {d: 0 for d in self.dones}
             self.rewards[current_agent] = self._illegal_value
         else:
