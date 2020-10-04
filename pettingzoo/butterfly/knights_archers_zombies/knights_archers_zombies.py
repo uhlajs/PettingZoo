@@ -403,6 +403,7 @@ class raw_env(AECEnv, EzPickle):
             self.clock.tick(self.FPS)                # FPS
         else:
             self.clock.tick()
+        self.is_last = self._agent_selector.is_last()
         if self._agent_selector.is_last():
             # Controls the Spawn Rate of Weapons
             self.sword_spawn_rate, self.arrow_spawn_rate = self.check_weapon_spawn(self.sword_spawn_rate, self.arrow_spawn_rate)
@@ -609,6 +610,7 @@ class raw_env(AECEnv, EzPickle):
         self.dones = dict(zip(self.agents, [False for _ in self.agents]))
         self.infos = dict(zip(self.agents, [{} for _ in self.agents]))
         self.reinit()
+        self.is_last = False
         if observe:
             return self.observe(self.agent_selection)
 

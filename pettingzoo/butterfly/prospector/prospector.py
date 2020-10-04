@@ -130,6 +130,7 @@ class Banker(pg.sprite.Sprite):
         return self.rect.x + const.AGENT_RADIUS, self.rect.y + const.AGENT_RADIUS
 
     def reset(self, pos):
+        self.is_last = False
         self.body.angle = 0
         self.image = pg.transform.rotozoom(self.orig_image, 0, 1)
         self.rect = self.image.get_rect(topleft=pos)
@@ -767,6 +768,7 @@ class raw_env(AECEnv, EzPickle):
 
     def step(self, action, observe=True):
         agent_id = self.agent_selection
+        self.is_last = self._agent_selector.is_last()
         all_agents_updated = self._agent_selector.is_last()
         if all_agents_updated:
             self.rewards = {agent: 0 for agent in self.agents}
@@ -821,6 +823,7 @@ class raw_env(AECEnv, EzPickle):
     def reset(self, observe=True):
         self.screen = pg.Surface(const.SCREEN_SIZE)
         self.done = False
+        self.is_last = False
 
         self.background.generate_debris(self.rng)
         self.water.generate_debris(self.rng)

@@ -56,6 +56,7 @@ class raw_env(AECEnv, EzPickle):
             zip(self.agents, [np.float64(0) for _ in self.agents]))
         self.dones = dict(zip(self.agents, [False for _ in self.agents]))
         self.infos = dict(zip(self.agents, [{} for _ in self.agents]))
+        self.is_last = False
         if observe:
             return self.observe(self.agent_selection)
 
@@ -71,6 +72,7 @@ class raw_env(AECEnv, EzPickle):
     def step(self, action, observe=True):
         agent = self.agent_selection
         action = np.array(action, dtype=np.float32)
+        self.is_last = self._agent_selector.is_last()
         self.env.step(action, self.agent_name_mapping[agent], self._agent_selector.is_last())
         for r in self.rewards:
             self.rewards[r] = self.env.get_last_rewards()[self.agent_name_mapping[r]]

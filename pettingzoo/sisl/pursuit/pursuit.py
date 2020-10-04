@@ -56,6 +56,7 @@ class raw_env(AECEnv, EzPickle):
         self._agent_selector.reinit(self.agents)
         self.agent_selection = self._agent_selector.next()
         self.env.reset()
+        self.is_last = False
         if observe:
             return self.observe(self.agent_selection)
 
@@ -70,6 +71,7 @@ class raw_env(AECEnv, EzPickle):
 
     def step(self, action, observe=True):
         agent = self.agent_selection
+        self.is_last = self._agent_selector.is_last()
         self.env.step(action, self.agent_name_mapping[agent], self._agent_selector.is_last())
         for k in self.dones:
             if self.env.frames >= self.env.max_frames:

@@ -297,6 +297,7 @@ class raw_env(AECEnv, EzPickle):
 
     def reset(self, observe=True):
         self.has_reset = True
+        self.is_last = False
         self.rewards = dict(zip(self.agents, [0 for _ in self.agents]))
         self.dones = dict(zip(self.agents, [False for _ in self.agents]))
         self.infos = dict(zip(self.agents, [{} for _ in self.agents]))
@@ -311,6 +312,7 @@ class raw_env(AECEnv, EzPickle):
 
     def step(self, action, observe=True):
         # move prisoners, -1 = move left, 0 = do  nothing and 1 is move right
+        self.is_last = self._agent_selector.is_last()
         if not isinstance(action, int):
             action = np.asarray(action)
         agent = self.agent_selection

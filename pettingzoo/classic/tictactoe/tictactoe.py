@@ -38,6 +38,8 @@ class raw_env(AECEnv):
         self._agent_selector = agent_selector(self.agents)
         self.agent_selection = self._agent_selector.reset()
 
+        self.is_last = True
+        
     # Key
     # ----
     # blank space = 0

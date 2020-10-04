@@ -408,6 +408,7 @@ class raw_env(AECEnv, EzPickle):
         self.rewards = self.env.rewards
         self.dones = self.env.dones
         self.infos = self.env.infos
+        self.is_last = False
         if observe:
             return self.observe(self.agent_selection)
 
@@ -429,6 +430,7 @@ class raw_env(AECEnv, EzPickle):
             raise Exception('Action for agent {} must be in Discrete({}).'
                             'It is currently {}'.format(agent, self.action_spaces[agent].n, action))
 
+        self.is_last = self._agent_selector.is_last()
         self.env.step(action, agent)
         # select next agent and observe
         self.agent_selection = self._agent_selector.next()

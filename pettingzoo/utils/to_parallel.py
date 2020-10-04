@@ -27,24 +27,17 @@ class to_parallel(ParallelEnv):
         dones = {}
         infos = {}
 
-        stepped_agents = set()
-        while (self.aec_env.agent_selection not in stepped_agents and self.aec_env.dones[self.aec_env.agent_selection]):
+        acted_set = set()
+        is_first_iter = True
+        while is_first_iter or not self.aec_env.is_last:
             agent = self.aec_env.agent_selection
-            self.aec_env.step(None)
-            stepped_agents.add(agent)
-
-        stepped_agents = set()
-        while (self.aec_env.agent_selection not in stepped_agents):
-            agent = self.aec_env.agent_selection
-            assert agent in actions or self.aec_env.dones[agent], \
-                "Live environment agent is not in actions dictionary"
-            self.aec_env.step(actions.get(agent, None))
-            stepped_agents.add(agent)
-
-        assert all(agent in stepped_agents or self.aec_env.dones[agent]
-                   for agent in actions), \
-            "environment has a nontrivial ordering, and cannot be used with"\
-            " the POMGameEnv wrapper"
+            if not self.aec_env.dones[agent]:
+                assert agent not in acted_set, "agent order is non-trivial"
+                acted_set.add(agent)
+            self.aec_env.step(actions[agent])
+            is_first_iter = False
+        for agent, done in self.aec_env.dones.items():
+            assert done or agent in acted_set, "agent order is non-trivial"
 
         rewards = self.aec_env.rewards
         dones = self.aec_env.dones

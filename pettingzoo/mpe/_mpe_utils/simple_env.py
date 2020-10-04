@@ -77,6 +77,7 @@ class SimpleEnv(AECEnv):
         self.agent_selection = self._agent_selector.reset()
         self.steps = 0
 
+        self.is_last = False
         self.current_actions = [None] * self.num_agents
 
         if observe:
@@ -149,6 +150,7 @@ class SimpleEnv(AECEnv):
     def step(self, action, observe=True):
         current_idx = self._index_map[self.agent_selection]
         next_idx = (current_idx + 1) % self.num_agents
+        self.is_last = self._agent_selector.is_last()
         self.agent_selection = self._agent_selector.next()
 
         self.current_actions[current_idx] = action

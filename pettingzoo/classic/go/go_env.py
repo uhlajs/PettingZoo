@@ -37,6 +37,7 @@ class raw_env(AECEnv):
         self.action_spaces = self._convert_to_dict([spaces.Discrete(self._N * self._N + 1) for _ in range(self.num_agents)])
 
         self._agent_selector = agent_selector(self.agents)
+        self.is_last = True
 
     def seed(self, seed=None):
         pass

@@ -29,6 +29,7 @@ class _parallel_env_wrapper(AECEnv):
 
         self._observations = self.env.reset()
 
+        self.is_last = True
         return self.observe(self.agent_selection) if observe else None
 
     def observe(self, agent):
@@ -36,7 +37,8 @@ class _parallel_env_wrapper(AECEnv):
 
     def step(self, action, observe=True):
         self._actions[self.agent_selection] = action
-        if self._agent_selector.is_last():
+        self.is_last = self._agent_selector.is_last()
+        if self.is_last:
             obss, rews, dones, infos = self.env.step(self._actions)
 
             self._observations = obss

@@ -193,6 +193,7 @@ class raw_env(AECEnv, EzPickle):
 
     def reset(self, observe=True):
         self.has_reset = True
+        self.is_last = False
         for i, piston in enumerate(self.pistonList):
             temp_range = np.arange(0, .5 * self.velocity * self.resolution, self.velocity)
             piston.position = (85 + 40 * i, 451 - temp_range[self.np_random.randint(0, len(temp_range))])
@@ -269,6 +270,7 @@ class raw_env(AECEnv, EzPickle):
     def step(self, action, observe=True):
         action = np.asarray(action)
         agent = self.agent_selection
+        self.is_last = self._agent_selector.is_last()
         if self.continuous:
             self.move_piston(self.pistonList[self.agent_name_mapping[agent]], action)
         else:

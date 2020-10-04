@@ -53,6 +53,7 @@ class BaseWrapper(AECEnv):
         self.rewards = self.env.rewards
         self.dones = self.env.dones
         self.infos = self.env.infos
+        self.is_last = self.env.is_last
 
         return observation
 
@@ -66,6 +67,7 @@ class BaseWrapper(AECEnv):
         self.rewards = self.env.rewards
         self.dones = self.env.dones
         self.infos = self.env.infos
+        self.is_last = self.env.is_last
 
         return next_obs
 
@@ -97,6 +99,7 @@ class AgentIterWrapper(BaseWrapper):
         if self.agent_selection != self.env.agent_selection:
             self._was_dones[cur_agent] = True
             self.agent_selection = self.env.agent_selection
+            self.is_last = self.env.is_last
         else:
             self._was_dones[cur_agent] = self.env.dones[cur_agent]
             super().step(action, False)
@@ -109,6 +112,7 @@ class AgentIterWrapper(BaseWrapper):
             if self.dones[agent] and not self._was_dones[agent]:
                 self.agent_selection = agent
                 self.rewards[agent] = self._final_rewards[agent]
+                self.is_last = False
                 break
 
         return super().observe(self.agent_selection) if observe else None

@@ -64,6 +64,7 @@ class raw_env(AECEnv):
 
     def reset(self, observe=True):
         self.reinit()
+        self.is_last = False
         if observe:
             return self.observe(self.agent_selection)
 
@@ -73,7 +74,8 @@ class raw_env(AECEnv):
         self.state[self.agent_selection] = action
 
         # collect reward if it is the last agent to act
-        if self._agent_selector.is_last():
+        self.is_last = self._agent_selector.is_last()
+        if self.is_last:
             self.rewards[self.agents[0]], self.rewards[self.agents[1]] = {
                 (rock, rock): (0, 0),
                 (rock, paper): (-1, 1),

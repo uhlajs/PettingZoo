@@ -28,6 +28,7 @@ class RLCardBase(AECEnv):
 
         self.observation_spaces = self._convert_to_dict([spaces.Box(low=0.0, high=1.0, shape=obs_shape, dtype=self._dtype) for _ in range(self.num_agents)])
         self.action_spaces = self._convert_to_dict([spaces.Discrete(self.env.game.get_action_num()) for _ in range(self.num_agents)])
+        self.is_last = True
 
     def seed(self, seed=None):
         self.env = rlcard.make(self.name, config={"seed": seed})

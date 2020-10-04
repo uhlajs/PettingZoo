@@ -40,6 +40,7 @@ class raw_env(AECEnv):
         self.agent_selection = None
 
         self.num_agents = len(self.agents)
+        self.is_last = True
 
     def seed(self, seed=None):
         pass

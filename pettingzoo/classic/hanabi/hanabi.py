@@ -157,6 +157,7 @@ class raw_env(AECEnv, EzPickle):
                                                            shape=(self.hanabi_env.vectorized_observation_shape()[0],),
                                                            dtype=np.float32)
                                    for player_name in self.agents}
+        self.is_last = True
 
     def seed(self, seed=None):
         config = dict(seed=seed, **self._config)

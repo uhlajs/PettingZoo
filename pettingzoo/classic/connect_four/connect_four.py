@@ -34,6 +34,8 @@ class raw_env(AECEnv):
         self.action_spaces = {i: spaces.Discrete(7) for i in self.agents}
         self.observation_spaces = {i: spaces.Box(low=0, high=1, shape=(6, 7, 2), dtype=np.int8) for i in self.agents}
 
+        self.is_last = True
+
     def seed(self, seed=None):
         pass
 

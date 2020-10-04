@@ -43,6 +43,7 @@ class raw_env(AECEnv):
         self.observation_spaces = {i: spaces.Box(low=np.float32(low), high=np.float32(high), dtype=np.float32) for i in self.agents}
 
         self.double_roll = 0
+        self.is_last = True
 
     def seed(self, seed=None):
         self.np_random = np.random.RandomState(seed)
