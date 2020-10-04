@@ -49,6 +49,8 @@ PettingZoo models games as *Agent Environment Cycle* (AEC) games, and thus can s
 
 `num_agents`: The number of agents currently in the environment.
 
+`is_last`: Whether the environment stepped (useful for taking parallel actions)
+
 `observation_spaces`: A dict of the observation spaces of every agent, keyed by name.
 
 `action_spaces`: A dict of the action spaces of every agent, keyed by name.
