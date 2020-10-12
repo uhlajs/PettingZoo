@@ -1,36 +1,7 @@
 from pettingzoo.utils.env import AECEnv
 from pettingzoo.utils._parallel_env import _parallel_env_wrapper
 from pettingzoo.utils.wrappers import OrderEnforcingWrapper
-
-
-class ParallelEnv:
-    def reset(self):
-        '''
-        returns:
-        observations a dictionary {"agent_1":obs_1, ..., "agent_n": obs_n}
-        '''
-
-    def step(self, actions):
-        '''
-        parameters:
-        - actions: {"agent_1": action1, ..., "agent_n": action_n}
-
-        returns:
-        (observations, rewards, dones, infos)
-
-        steps all active agents in the environment, returns all observations, rewards, infos of those active agentts
-        which are all dictionaries
-        '''
-
-    def render(self, mode="human"):
-        '''
-        renders environment by printing text or through a window
-        '''
-
-    def close(self):
-        '''
-        releases resources (typically just closes the rendering window)
-        '''
+from pettingzoo.utils.env import ParallelEnv
 
 
 class to_parallel(ParallelEnv):
@@ -41,6 +12,9 @@ class to_parallel(ParallelEnv):
         self.agents = aec_env.agents
         self.num_agents = aec_env.num_agents
         self._was_dones = {agent: False for agent in self.agents}
+
+    def seed(self, seed=None):
+        return self.aec_env.seed(seed)
 
     def reset(self):
         self.aec_env.reset(observe=False)
@@ -53,13 +27,24 @@ class to_parallel(ParallelEnv):
         dones = {}
         infos = {}
 
-        for agent in self.agents:
-            if not self._was_dones[agent]:
-                assert agent == self.aec_env.agent_selection, f"environment has a nontrivial ordering, and cannot be used with the to_parallel wrapper\nCurrent agent: {self.aec_env.agent_selection}\nExpected agent: {agent}"
-                assert agent in actions, "Live environment agent is not in actions dictionary"
-                self._was_dones[agent] = self.aec_env.dones[agent]
-                self.aec_env.step(actions[agent], observe=False)
-                agent = self.aec_env.agent_selection
+        stepped_agents = set()
+        while (self.aec_env.agent_selection not in stepped_agents and self.aec_env.dones[self.aec_env.agent_selection]):
+            agent = self.aec_env.agent_selection
+            self.aec_env.step(None)
+            stepped_agents.add(agent)
+
+        stepped_agents = set()
+        while (self.aec_env.agent_selection not in stepped_agents):
+            agent = self.aec_env.agent_selection
+            assert agent in actions or self.aec_env.dones[agent], \
+                "Live environment agent is not in actions dictionary"
+            self.aec_env.step(actions.get(agent, None))
+            stepped_agents.add(agent)
+
+        assert all(agent in stepped_agents or self.aec_env.dones[agent]
+                   for agent in actions), \
+            "environment has a nontrivial ordering, and cannot be used with"\
+            " the POMGameEnv wrapper"
 
         rewards = self.aec_env.rewards
         dones = self.aec_env.dones
@@ -82,42 +67,10 @@ def parallel_wrapper_fn(env_fn):
     return par_fn
 
 
-class Sequentialize:
-    def __init__(self, par_env):
-        self.agents = par_env.agents
-        self.observation_spaces = [par_env.observation_spaces[agent] for agent in self.agents]
-        self.action_spaces = [par_env.action_spaces[agent] for agent in self.agents]
-        self.par_env = par_env
-
-    def _sequentialize(self, d):
-        return [d.get(agent, None) for agent in self.agents]
-
-    def reset(self):
-        obs_dict = self.par_env.reset()
-
-        return self._sequentialize(obs_dict)
-
-    def step(self, actions):
-        act_list = {agent: actions[i] for i, agent in enumerate(self.agents) if actions[i] is not None}
-        obs, rew, done, info = self.par_env.step(act_list)
-        obs = self._sequentialize(obs)
-        rew = self._sequentialize(rew)
-        done = self._sequentialize(done)
-        info = self._sequentialize(info)
-        return obs, rew, done, info
-
-    def render(self, mode="human"):
-        return self.par_env.render(mode)
-
-    def close(self):
-        self.par_env.close()
-
-
 def from_parallel(par_env):
     if isinstance(par_env, to_parallel):
         return par_env.aec_env
     else:
-        sequ_env = Sequentialize(par_env)
-        aec_env = _parallel_env_wrapper(sequ_env)
+        aec_env = _parallel_env_wrapper(par_env)
         ordered_env = OrderEnforcingWrapper(aec_env)
         return ordered_env

@@ -12,13 +12,19 @@ from pettingzoo.utils.to_parallel import parallel_wrapper_fn
 from gym.utils import EzPickle
 
 
-def raw_env(seed=None, max_frames=500, **reward_args):
-    map_size = 45
-    return _parallel_env_wrapper(_parallel_env(map_size, reward_args, max_frames, seed))
+map_size = 45
+max_frames_default = 500
+
+
+def parallel_env(max_frames=max_frames_default, **reward_args):
+    return _parallel_env(map_size, reward_args, max_frames)
+
+
+def raw_env(max_frames=max_frames_default, **reward_args):
+    return _parallel_env_wrapper(_parallel_env(map_size, reward_args, max_frames))
 
 
 env = make_env(raw_env)
-parallel_env = parallel_wrapper_fn(env)
 
 
 def get_config(map_size, attack_penalty=-0.2):
@@ -58,14 +64,14 @@ def get_config(map_size, attack_penalty=-0.2):
 
 
 class _parallel_env(magent_parallel_env, EzPickle):
-    def __init__(self, map_size, reward_args, max_frames, seed):
-        EzPickle.__init__(self, map_size, reward_args, max_frames, seed)
+    def __init__(self, map_size, reward_args, max_frames):
+        EzPickle.__init__(self, map_size, reward_args, max_frames)
         env = magent.GridWorld(get_config(map_size, **reward_args), map_size=map_size)
 
         handles = env.get_handles()
 
         names = ["predator", "prey"]
-        super().__init__(env, handles, names, map_size, max_frames, seed)
+        super().__init__(env, handles, names, map_size, max_frames)
 
     def generate_map(self):
         env, map_size = self.env, self.map_size

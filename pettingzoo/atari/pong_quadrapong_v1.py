@@ -2,7 +2,7 @@ from .base_atari_env import BaseAtariEnv, base_env_wrapper_fn, parallel_wrapper_
 
 
 def raw_env(**kwargs):
-    mode = 32
+    mode = 33
     num_players = 4
     return BaseAtariEnv(game="pong", num_players=num_players, mode_num=mode, **kwargs)
 

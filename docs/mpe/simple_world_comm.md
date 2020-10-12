@@ -7,7 +7,7 @@ action-shape: "(5),(20)"
 action-values: "Discrete(5),(20)"
 observation-shape: "(28),(34)"
 observation-values: "(-inf,inf)"
-import: "pettingzoo.mpe import simple_world_comm_v0"
+import: "from pettingzoo.mpe import simple_world_comm_v1"
 agent-labels: "agents=[leadadversary_0, adversary_0, adversary_1, adversary_3, agent_0, agent_1]"
 ---
 
@@ -39,11 +39,11 @@ Where X is the Cartesian product (giving a total action space of 50).
 ### Arguments
 
 ```
-simple_world_comm.env(seed=None, num_good=2, num_adversaries=4, num_obstacles=1,
-                num_food=2, max_frames=100)
+simple_world_comm.env(num_good=2, num_adversaries=4, num_obstacles=1,
+                num_food=2, max_frames=25)
 ```
 
-`seed`:  seed for random values. Set to None to use machine random source. Set to fixed value for deterministic behavior
+
 
 `num_good`:  number of good agents
 

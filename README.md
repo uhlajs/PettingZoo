@@ -6,8 +6,6 @@
 
 PettingZoo is a Python library for conducting research in multi-agent reinforcement learning. It's akin to a multi-agent version of OpenAI's Gym library.
 
-We model environments as *Agent Environment Cycle* (AEC) games, in order to be able to support all types of multi-agent RL environments under one API.
-
 Our website with comprehensive documentation is [pettingzoo.ml](https://www.pettingzoo.ml)
 
 ## Environments and Installation
@@ -28,6 +26,8 @@ This does not include dependencies for all families of environments (there's a m
 We support Python 3.6, 3.7 and 3.8 on Linux and macOS.
 
 ## API
+
+PettingZoo model environments as [*Agent Environment Cycle* (AEC) games](https://arxiv.org/abs/2009.13051), in order to be able to cleanly support all types of multi-agent RL environments under one API and to minimize the potential for certain classes of common bugs.
 
 Using environments in PettingZoo is very similar to Gym, i.e. you initialize an environment via:
 
@@ -58,13 +58,41 @@ SuperSuit is a library that includes all commonly used wrappers in RL (frame sta
 
 ## Release History
 
+Version 1.3.4 (October 3, 2020)
+
+Fixed prospector agents leaving game area. Fixed to_parallel wrapper issue which was causing crashes with rllib.
+
+Version 1.3.3 (September 22, 2020)
+
+Fixed observation issue multiwalker environment, fixed MPE speaker listener naming scheme, renamed max_agent_iter to max_iter.
+
+Version 1.3.2 (September 17, 2020)
+
+Fixed import issue for depreciated multiwalker environment.
+
+Version 1.3.1 (September 16, 2020)
+
+Various fixes and parameter changes for all SISL environments, bumped versions. Fixed dones computations in knights_archers_zombies and cooperative_pong, bumped versions. Fixed install extras.
+
+Version 1.3.0 (September 8, 2020):
+
+Fixed how agent iter wrapper handles premature agent death. Bumped environments with death (joust, mario_bros, maze_craze, warlords, wizard_of_wor, knights_archers_zombies, battle, battlefield, combined_arms, gather, tiger_deer, multiwalker). Also switched MAgent to having a native parallel environment, making it much faster. We bumped adverserial pursuit as well due to this.
+
+Version 1.2.1 (August 31, 2020):
+
+Fixed ability to indefinitely stall in Double Dunk, Othello, Tennis and Video Checkers Atari environments, bumped versions to v1.
+
+Version 1.2.0 (August 27, 2020):
+
+Large fix to quadrapong, version bumped to v1.
+
 Version 1.1.0 (August 20, 2020):
 
 Added [ParallelEnv](https://www.pettingzoo.ml/api#parallel-api) API where all agents step at once. Fixed entombed_competitive rewards and bumped environment version to entombed_competitive_v1. Fixed prospector rewards and bumped version to prospector_v1.
 
 Version 1.0.1 (August 12, 2020):
 
-Fixes to continuous made on pistonball and prison environments, along with a bad test that let the problems slip through. Versions bumped on both games.
+Fixes to continuous mode on pistonball and prison butterfly environments, along with a bad test that let the problems slip through. Versions bumped on both games.
 
 Version 1.0.0 (August 5th, 2020):
 
@@ -76,13 +104,11 @@ This is the first official stable release of PettingZoo. Any changes to environm
 To cite this project in publication, please use
 
 ```
-@misc{pettingZoo2020,
-  author = {Terry, Justin K and Black, Benjamin and Jayakumar, Mario  and Hari, Ananth and Santos, Luis and Dieffendahl, Clemens and Williams, Niall and Ravi, Praveen and Lokesh, Yashas and Horsch, Caroline and Patel, Dipam},
-  title = {Petting{Z}oo},
-  year = {2020},
-  publisher = {GitHub},
-  note = {GitHub repository},
-  howpublished = {\url{https://github.com/PettingZoo-Team/PettingZoo}}
+@article{terry2020pettingzoo,
+  Title = {PettingZoo: Gym for Multi-Agent Reinforcement Learning},
+  Author = {Terry, Justin K and Black, Benjamin and Jayakumar, Mario and Hari, Ananth and Santos, Luis and Dieffendahl, Clemens and Williams, Niall L and Lokesh, Yashas and Horsch, Caroline and Ravi, Praveen and Sullivan, Ryan},
+  journal={arXiv preprint arXiv:2009.14471},
+  year={2020}
 }
 ```
 

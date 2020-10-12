@@ -9,7 +9,7 @@ action-values: "[0, 5]"
 observation-shape: "(512, 512, 3)"
 observation-values: "(0, 255)"
 average-total-reward: "250.6"
-import: "from pettingzoo.butterfly import knights_archers_zombies_v0"
+import: "from pettingzoo.butterfly import knights_archers_zombies_v2"
 agent-labels: "agents= ['archer_0', 'archer_1', 'knight_0', 'knight_1']"
 ---
 
@@ -32,7 +32,7 @@ Press 'M' key to spawn a new knight.
 ### Arguments
 
 ```
-knights_archers_zombies.env(spawn_rate=20, knights=2, archers=2,
+knights_archers_zombies.env(spawn_rate=20, num_knights=2, num_archers=2,
 killable_knights=True, killable_archers=True, black_death=True, line_death=True, pad_observation=True, max_frames=900)
 ```
 
@@ -52,4 +52,3 @@ killable_knights=True, killable_archers=True, black_death=True, line_death=True,
 `line_death`:  if set to False, agents do not die when they touch the top or bottom border. If True, agents die as soon as they touch the top or bottom border.
 
 `pad_observation`:  if agents are near edge of environment, their observation cannot form a 40x40 grid. If this is set to True, the observation is padded with black.
-
