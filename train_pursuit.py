@@ -14,7 +14,7 @@ from ray.rllib.models.tf.misc import normc_initializer
 from ray.tune.registry import register_env
 from ray.rllib.utils import try_import_tf
 from ray.rllib.env import PettingZooEnv
-from pettingzoo.sisl import unpruned_pursuit_v0, pursuit_v2
+from pettingzoo.sisl import unpruned_pursuit_v0, pursuit_v3
 
 from supersuit import flatten_v0
 from cyclic_reward_wrapper import cyclically_expansive_learning
@@ -75,9 +75,9 @@ def get_env(env_name):
     if env_name == 'unpruned':
         game_env = unpruned_pursuit_v0
     elif env_name == 'pruned':
-        game_env = pursuit_v2
+        game_env = pursuit_v3
     elif env_name == 'curriculum':
-        game_env = pursuit_v2
+        game_env = pursuit_v3
     else:
         raise TypeError("{} environment not supported!".format(game_env))
     return game_env
@@ -123,23 +123,60 @@ if __name__ == "__main__":
             local_dir="~/results_unpruned/"+env_name,
             config={
 
+                ### PREVIOUS PARAMS
                 # Enviroment specific
-                "env": env_name,
+                #"env": env_name,
 
                 # General
-                "log_level": "INFO",
-                "num_gpus": 1,
-                "num_workers": 8,
-                "num_envs_per_worker": 8,
-                "learning_starts": 1000,
-                "buffer_size": int(1e5),
-                "compress_observations": True,
-                "rollout_fragment_length": 20,
-                "train_batch_size": 512,
-                "gamma": .99,
+                #"log_level": "INFO",
+                #"num_gpus": 1,
+                #"num_workers": 8,
+                #"num_envs_per_worker": 8,
+                #"learning_starts": 1000,
+                #"buffer_size": int(1e5),
+                #"compress_observations": True,
+                #"rollout_fragment_length": 20,
+                #"train_batch_size": 512,
+                #"gamma": .99,
 
                 # Method specific
+                
 
+                ### NEW PARAMS
+                # Enviroment specific
+                "env": env_name,
+                "double_q": True,
+                "dueling": True,
+                "num_atoms": 1,
+                "noisy": False,
+                "n_step": 3,
+                "lr": 0.0001,
+                #"lr": 0.0000625,
+                "adam_epsilon": 1.5e-4,
+                "buffer_size": int(1e5),
+                "exploration_config": {
+                    "final_epsilon": 0.01,
+                    "epsilon_timesteps": 200000,
+                },
+                "prioritized_replay": True,
+                "prioritized_replay_alpha": 0.5,
+                "prioritized_replay_beta": 0.4,
+                "final_prioritized_replay_beta": 1.0,
+                "prioritized_replay_beta_annealing_timesteps": 2000000,
+
+                "num_gpus": 1,
+
+                "log_level": "ERROR",
+                "num_workers": 8,
+                "num_envs_per_worker": 8,
+                "rollout_fragment_length": 32,
+                "train_batch_size": 512,
+                "target_network_update_freq": 50000,
+                "timesteps_per_iteration": 25000,
+                "learning_starts": 80000,
+                "compress_observations": False,
+                "gamma": 0.99,
+ 
                 "multiagent": {
                     "policies": policies,
                     "policy_mapping_fn": (
@@ -180,7 +217,7 @@ if __name__ == "__main__":
                 "sgd_minibatch_size": 500,
                 "num_sgd_iter": 10,
                 "batch_mode": 'truncate_episodes',
-                "vf_share_layers": True,
+                #"vf_share_layers": True,
 
                 # Method specific
 
