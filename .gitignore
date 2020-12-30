@@ -7,3 +7,4 @@ saved_observations/
 build/
 dist/
 PettingZoo.egg-info/
+*.out
