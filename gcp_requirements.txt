@@ -74,7 +74,7 @@ PettingZoo==1.4.2
 Pillow==5.4.1
 pluggy==0.13.1
 prometheus-client==0.8.0
-protobuf==3.11.2
+protobuf>=3.11.2
 psutil==5.6.7
 py==1.8.0
 py-spy==0.3.2
@@ -98,9 +98,9 @@ python-xlib==0.28
 pytz==2019.3
 pyunpack==0.2.1
 PyWavelets==1.1.1
-PyYAML==3.13
+#PyYAML==3.13
 #ray @ file:///home/luis/MA-ALE-paper/ray_wheels/ray-1.1.0.dev0-cp37-cp37m-manylinux1_x86_64.whl
-redis==3.3.11
+redis>=3.3.11
 requests==2.22.0
 rlcard==0.2.5
 rsa==4.6
