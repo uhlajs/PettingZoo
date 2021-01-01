@@ -20,6 +20,9 @@ class queuesum:
         assert new_size >= self.size
         self.size = new_size
 
+    def __str__(self):
+        return f"{self.queue}"
+
 
 class cyclically_expansive_learning(PettingzooWrap):
     def __init__(self, env, curriculum):
@@ -44,7 +47,7 @@ class cyclically_expansive_learning(PettingzooWrap):
         self.reward_queues = {agent: queuesum() for agent in self.agents}
         for qs in self.reward_queues.values():
             qs.resize(self.curriculum[0][1])
-        self._cumulative_rewards = {a: 0 for a in self.agents}
+        self.env._cumulative_rewards = {a: 0 for a in self.agents}
 
     def step(self, action):
         agent = self.env.agent_selection
@@ -55,6 +58,15 @@ class cyclically_expansive_learning(PettingzooWrap):
             for qs in self.reward_queues.values():
                 qs.resize(num_cycles_keep)
 
-        self._cumulative_rewards = {a: self.reward_queues[a].add(r) for a, r in self.rewards.items()}
+        self.env._cumulative_rewards = {a: self.reward_queues[a].add(r) for a, r in self.env.rewards.items()}
         self.env_step += 1
+
+        #agent = self.env.agent_selection
+        #_, rew, _, _ = self.env.last(observe=False)
+        #print("Step: ", self.env_step)
+        #print(f"  Agent: {agent} - reward: {self.env.rewards[agent]:1.5f}, cum rew: {self.env._cumulative_rewards[agent]:1.5f}, last: {rew:1.5f}")
+        #print(f"  deque: {self.reward_queues[agent]}")
+        #print("   rewards: ",[f"{r:1.5f}" for r in self.rewards.values()])
+        #print("   cumulat: ",[f"{r:1.5f}" for r in self._cumulative_rewards.values()])
+
 
