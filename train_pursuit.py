@@ -65,7 +65,7 @@ def make_env_creator(env_name, game_env):
     def env_creator(args):
         env = game_env.env()
         if env_name == 'curriculum':
-            env = cyclically_expansive_learning(env, [(0,1), (10000000,2), (30000000,3), (50000000,8)])
+            env = cyclically_expansive_learning(env, [(0,1*8), (10000000,2*8), (30000000,3*8), (50000000,8*8)])
         env = flatten_v0(env)
         return env
     return env_creator
