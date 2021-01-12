@@ -8,3 +8,5 @@ build/
 dist/
 PettingZoo.egg-info/
 *.out
+*.pkl
+
