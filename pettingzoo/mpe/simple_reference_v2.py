@@ -1,9 +1,9 @@
-from ._mpe_utils.simple_env import SimpleEnv, make_env
+from ._mpe_utils.simple_env import SimpleDiscreateEnv, make_env
 from .scenarios.simple_reference import Scenario
 from pettingzoo.utils.conversions import parallel_wrapper_fn
 
 
-class raw_env(SimpleEnv):
+class raw_env(SimpleDiscreateEnv):
     def __init__(self, local_ratio=0.5, max_cycles=25):
         assert 0. <= local_ratio <= 1., "local_ratio is a proportion. Must be between 0 and 1."
         scenario = Scenario()

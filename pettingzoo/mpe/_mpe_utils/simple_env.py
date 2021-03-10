@@ -1,23 +1,29 @@
-from gym import spaces
 import numpy as np
-from pettingzoo import AECEnv
-from pettingzoo.utils.agent_selector import agent_selector
+from gym import spaces
 from gym.utils import seeding
+from pettingzoo import AECEnv
 from pettingzoo.utils import wrappers
+from pettingzoo.utils.agent_selector import agent_selector
 
 
-def make_env(raw_env):
-    def env(**kwargs):
+def make_env(raw_env, continuous=False):
+    def env_discreate(**kwargs):
         env = raw_env(**kwargs)
         env = wrappers.AssertOutOfBoundsWrapper(env)
         env = wrappers.OrderEnforcingWrapper(env)
         return env
-    return env
+
+    def env_continuous(**kwargs):
+        env = raw_env(**kwargs)
+        env = wrappers.ClipOutOfBoundsWrapper(env)
+        env = wrappers.OrderEnforcingWrapper(env)
+        return env
+    return env_discreate if not continuous else env_continuous
 
 
-class SimpleEnv(AECEnv):
+class SimpleDiscreateEnv(AECEnv):
     def __init__(self, scenario, world, max_cycles, local_ratio=None):
-        super(SimpleEnv, self).__init__()
+        super().__init__()
 
         self.seed()
 
@@ -27,6 +33,7 @@ class SimpleEnv(AECEnv):
         self.scenario = scenario
         self.world = world
         self.local_ratio = local_ratio
+        self.sensitivity_init = 5.0
 
         self.scenario.reset_world(self.world, self.np_random)
 
@@ -37,8 +44,15 @@ class SimpleEnv(AECEnv):
         self._agent_selector = agent_selector(self.agents)
 
         # set spaces
-        self.action_spaces = dict()
-        self.observation_spaces = dict()
+        self.observation_spaces, self.action_spaces = self.build_spaces()
+
+        self.steps = 0
+        self.current_actions = [None] * self.num_agents
+        self.viewer = None
+
+    def build_spaces(self):
+        action_spaces = dict()
+        observation_spaces = dict()
         for agent in self.world.agents:
             space_dim = 1
             if agent.movable:
@@ -47,14 +61,11 @@ class SimpleEnv(AECEnv):
                 space_dim *= self.world.dim_c
 
             obs_dim = len(self.scenario.observation(agent, self.world))
-            self.action_spaces[agent.name] = spaces.Discrete(space_dim)
-            self.observation_spaces[agent.name] = spaces.Box(low=-np.float32(np.inf), high=+np.float32(np.inf), shape=(obs_dim,), dtype=np.float32)
+            action_spaces[agent.name] = spaces.Discrete(space_dim)
+            observation_spaces[agent.name] = spaces.Box(
+                low=-np.float32(np.inf), high=+np.float32(np.inf), shape=(obs_dim,), dtype=np.float32)
 
-        self.steps = 0
-
-        self.current_actions = [None] * self.num_agents
-
-        self.viewer = None
+        return observation_spaces, action_spaces
 
     def seed(self, seed=None):
         self.np_random, seed = seeding.np_random(seed)
@@ -126,7 +137,7 @@ class SimpleEnv(AECEnv):
             if action[0] == 4:
                 agent.action.u[1] = +1.
 
-            sensitivity = 5.0
+            sensitivity = self.sensitivity_init
             if agent.accel is not None:
                 sensitivity = agent.accel
             agent.action.u *= sensitivity
@@ -235,3 +246,66 @@ class SimpleEnv(AECEnv):
             self.viewer.close()
             self.viewer = None
         self._reset_render()
+
+
+class SimpleContinuousEnv(SimpleDiscreateEnv):
+    def build_spaces(self):
+        action_limit = 1
+        action_spaces = dict()
+        observation_spaces = dict()
+        for agent in self.world.agents:
+            space_dim = 1
+            if agent.movable:
+                space_dim *= self.world.dim_p
+            if not agent.silent:
+                raise NotImplementedError
+
+            obs_dim = len(self.scenario.observation(agent, self.world))
+            action_spaces[agent.name] = spaces.Box(
+                low=-action_limit, high=action_limit, shape=(space_dim,), dtype=np.float32)
+            observation_spaces[agent.name] = spaces.Box(
+                low=-np.float32(np.inf), high=+np.float32(np.inf), shape=(obs_dim,), dtype=np.float32)
+
+        return observation_spaces, action_spaces
+
+    def _execute_world_step(self):
+        # set action for each agent
+        for i, agent in enumerate(self.world.agents):
+            action = self.current_actions[i]
+            self._set_action(action, agent, self.action_spaces[agent.name])
+
+        self.world.step()
+
+        global_reward = 0.
+        if self.local_ratio is not None:
+            global_reward = float(self.scenario.global_reward(self.world))
+
+        for agent in self.world.agents:
+            agent_reward = float(self.scenario.reward(agent, self.world))
+            if self.local_ratio is not None:
+                reward = global_reward * (1 - self.local_ratio) + agent_reward * self.local_ratio
+            else:
+                reward = agent_reward
+
+            self.rewards[agent.name] = reward
+
+    # set env action for a particular agent
+    def _set_action(self, action, agent, action_space, time=None):
+        agent.action.u = np.zeros(self.world.dim_p)
+        agent.action.c = np.zeros(self.world.dim_c)
+        # process action
+
+        if agent.movable:
+            # physical action
+            agent.action.u = np.zeros(self.world.dim_p)
+
+            # Process continuous actions
+            agent.action.u[0] = action[0]
+            agent.action.u[1] = action[1]
+
+            sensitivity = self.sensitivity_init
+            if agent.accel is not None:
+                sensitivity = agent.accel
+            agent.action.u *= sensitivity
+        if not agent.silent:
+            raise NotImplementedError("MPE does not support continuous action space with discreate action.")

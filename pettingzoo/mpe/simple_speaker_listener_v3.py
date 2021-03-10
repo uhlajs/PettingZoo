@@ -1,9 +1,9 @@
-from ._mpe_utils.simple_env import SimpleEnv, make_env
+from ._mpe_utils.simple_env import SimpleDiscreateEnv, make_env
 from .scenarios.simple_speaker_listener import Scenario
 from pettingzoo.utils.conversions import parallel_wrapper_fn
 
 
-class raw_env(SimpleEnv):
+class raw_env(SimpleDiscreateEnv):
     def __init__(self, max_cycles=25):
         scenario = Scenario()
         world = scenario.make_world()
