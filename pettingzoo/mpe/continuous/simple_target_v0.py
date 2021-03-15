@@ -13,7 +13,7 @@ class raw_env(SimpleContinuousEnv):
         scenario = Scenario()
         world = scenario.make_world(N)
         super().__init__(scenario, world, max_cycles, local_ratio)
-        self.metadata['name'] = "simple_spread_continuous_v2"
+        self.metadata['name'] = "simple_target_continuous_v2"
 
 
 env = make_env(raw_env, continuous=True)
