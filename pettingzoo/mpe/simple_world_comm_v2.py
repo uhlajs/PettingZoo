@@ -1,6 +1,10 @@
+import functools
+
+from pettingzoo.utils.conversions import parallel_wrapper_fn
+
+from ._mpe_utils.manual_control import manual
 from ._mpe_utils.simple_env import SimpleDiscreateEnv, make_env
 from .scenarios.simple_world_comm import Scenario
-from pettingzoo.utils.conversions import parallel_wrapper_fn
 
 
 class raw_env(SimpleDiscreateEnv):
@@ -13,3 +17,4 @@ class raw_env(SimpleDiscreateEnv):
 
 env = make_env(raw_env)
 parallel_env = parallel_wrapper_fn(env)
+manual_control = functools.partial(manual, parallel_env=parallel_env)
