@@ -13,7 +13,7 @@ class raw_env(SimpleDiscreateEnv):
         scenario = Scenario()
         world = scenario.make_world(N)
         super().__init__(scenario, world, max_cycles, local_ratio)
-        self.metadata['name'] = "simple_spread_v0"
+        self.metadata['name'] = "simple_target_v0"
 
 
 env = make_env(raw_env)
