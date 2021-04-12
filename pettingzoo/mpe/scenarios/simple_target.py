@@ -71,7 +71,9 @@ class Scenario(BaseScenario):
         rew = 0
         if agent.collide:
             for a in world.agents:
-                if self.is_collision(a, agent):
+                if a == agent:
+                    continue
+                elif self.is_collision(a, agent):
                     rew -= 1
         return rew
 
