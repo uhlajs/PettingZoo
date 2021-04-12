@@ -4,7 +4,7 @@ from pettingzoo.utils.conversions import parallel_wrapper_fn
 
 from ._mpe_utils.manual_control import manual
 from ._mpe_utils.simple_env import SimpleDiscreateEnv, make_env
-from .scenarios.simple_adversary import Scenario
+from .scenarios.simple_confuse import Scenario
 
 
 class raw_env(SimpleDiscreateEnv):
@@ -12,7 +12,7 @@ class raw_env(SimpleDiscreateEnv):
         scenario = Scenario()
         world = scenario.make_world(N)
         super().__init__(scenario, world, max_cycles)
-        self.metadata['name'] = "simple_adversary_v2"
+        self.metadata['name'] = "simple_confuse_v0"
 
 
 env = make_env(raw_env)
