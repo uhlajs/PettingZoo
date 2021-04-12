@@ -77,45 +77,53 @@ class Scenario(BaseScenario):
         # Agents are rewarded based on minimum agent distance to each landmark
         return self.adversary_reward(agent, world) if agent.adversary else self.agent_reward(agent, world)
 
+    def distance(self, first, second):
+        return np.linalg.norm(first.state.p_pos - second.state.p_pos, ord=2)
+
     def agent_reward(self, agent, world):
         # Rewarded based on how close any good agent is to the goal landmark, and how far the adversary is from it
         shaped_reward = True
         shaped_adv_reward = True
+        pos_rew, adv_rew = 0, 0
 
         # Calculate negative reward for adversary
         adversary_agents = self.adversaries(world)
         if shaped_adv_reward:  # distance-based adversary reward
-            adv_rew = sum([np.sqrt(np.sum(np.square(a.state.p_pos - a.goal_a.state.p_pos))) for a in adversary_agents])
-        else:  # proximity-based adversary reward (binary)
-            adv_rew = 0
-            for a in adversary_agents:
-                if np.sqrt(np.sum(np.square(a.state.p_pos - a.goal_a.state.p_pos))) < 2 * a.goal_a.size:
-                    adv_rew -= 5
+            # adv_rew = sum([np.sqrt(np.sum(np.square(a.state.p_pos - a.goal_a.state.p_pos))) for a in adversary_agents])
+            adv_rew = sum([self.distance(a, a.goal_a) for a in adversary_agents])
+
+        for a in adversary_agents:
+            # if np.sqrt(np.sum(np.square(a.state.p_pos - a.goal_a.state.p_pos))) < a.size + a.goal_a.size:
+            if self.distance(a, a.goal_a) < a.size + a.goal_a.size:
+                adv_rew -= 5
 
         # Calculate positive reward for agents
         good_agents = self.good_agents(world)
         if shaped_reward:  # distance-based agent reward
             pos_rew = -min(
-                [np.sqrt(np.sum(np.square(a.state.p_pos - a.goal_a.state.p_pos))) for a in good_agents])
-        else:  # proximity-based agent reward (binary)
-            pos_rew = 0
-            if min([np.sqrt(np.sum(np.square(a.state.p_pos - a.goal_a.state.p_pos))) for a in good_agents]) \
-                    < 2 * agent.goal_a.size:
-                pos_rew += 5
-            pos_rew -= min(
-                [np.sqrt(np.sum(np.square(a.state.p_pos - a.goal_a.state.p_pos))) for a in good_agents])
+                # [np.sqrt(np.sum(np.square(a.state.p_pos - a.goal_a.state.p_pos))) for a in good_agents])
+                [self.distance(a, a.goal_a) for a in good_agents])
+
+        # if min([np.sqrt(np.sum(np.square(a.state.p_pos - a.goal_a.state.p_pos))) for a in good_agents]) \
+        if min([self.distance(a, a.goal_a) for a in good_agents]) \
+                < 2 * agent.goal_a.size:
+            pos_rew += 10
+
         return pos_rew + adv_rew
 
     def adversary_reward(self, agent, world):
         # Rewarded based on proximity to the goal landmark
         shaped_reward = True
+        adv_rew = 0
+
         if shaped_reward:  # distance-based reward
-            return -np.sqrt(np.sum(np.square(agent.state.p_pos - agent.goal_a.state.p_pos)))
-        else:  # proximity-based reward (binary)
-            adv_rew = 0
-            if np.sqrt(np.sum(np.square(agent.state.p_pos - agent.goal_a.state.p_pos))) < 2 * agent.goal_a.size:
-                adv_rew += 5
-            return adv_rew
+            # adv_rew = -np.sqrt(np.sum(np.square(agent.state.p_pos - agent.goal_a.state.p_pos)))
+            adv_rew = -self.distance(agent, agent.goal_a)
+
+        # if np.sqrt(np.sum(np.square(agent.state.p_pos - agent.goal_a.state.p_pos))) < agent.goal_a.size agent.size:
+        if self.distance(agent, agent.goal_a) < agent.goal_a.size + agent.size:
+            adv_rew += 5
+        return adv_rew
 
     def observation(self, agent, world):
         # get positions of all entities in this agent's reference frame
@@ -134,6 +142,6 @@ class Scenario(BaseScenario):
             other_pos.append(other.state.p_pos - agent.state.p_pos)
 
         if not agent.adversary:
-            return np.concatenate([agent.state.p_vel] + [agent.state.p_pos] + [agent.goal_a.state.p_pos - agent.state.p_pos] + entity_pos + other_pos)
+            return np.concatenate([agent.goal_a.state.p_pos - agent.state.p_pos] + entity_pos + other_pos)
         else:
             return np.concatenate(entity_pos + other_pos)
